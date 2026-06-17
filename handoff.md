@@ -2,7 +2,7 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-17 — by: Task 14 execution (ERC-8004 attestation complete)
+**Last updated:** 2026-06-17 — by: Task 15 execution (operator orchestrator complete)
 
 ---
 
@@ -10,7 +10,7 @@
 
 - **What:** Verity, a verification-first onchain-finance research agent. Mantle Research Challenge, Track 2. Deadline **July 3, 2026**.
 - **Where we are:** Tasks 0–14 complete. ERC-8004 attestation module (hashFile + ValidationRegistry write) complete. Ready for Task 15 (operator orchestrator).
-- **Next action:** Begin **Task 15** (operator orchestrator) in the plan.
+- **Next action:** Begin **Task 16** (CLI + cached fixture run) in the plan.
 - **Spec:** `docs/superpowers/specs/2026-06-17-verity-onchain-research-agent-design.md`
 - **Plan:** `docs/superpowers/plans/2026-06-17-verity-onchain-research-agent.md`
 
@@ -39,7 +39,7 @@
 | 12 | Telemetry (PostHog) | ☑ done |
 | 13 | Report builder (PDF) | ☑ done |
 | 14 | ERC-8004 attestation | ☑ done |
-| 15 | Operator orchestrator | ☐ |
+| 15 | Operator orchestrator | ☑ done |
 | 16 | CLI + cached fixture run | ☐ |
 | 17 | SKILL.md + README + submission | ☐ |
 
@@ -82,3 +82,4 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - 2026-06-17 — Task 12 complete. Created `src/telemetry.test.ts` (1 test: captures run event with injected sink). Created `src/telemetry.ts` (RunMetrics interface, Sink interface with capture + shutdown, makeTelemetry factory, defaultSink with PostHog or no-op). TDD: test failed (module not found), impl written, 1 test passes. `npx tsc --noEmit` clean. Committed (SHA: 5b2942a). Next: Task 13 — report builder (PDF).
 - 2026-06-17 — Task 14 complete. Created `src/attest-8004/hash.ts` (hashFile — keccak256 of file bytes via viem), `src/attest-8004/hash.test.ts` (1 test, TDD pass), `src/attest-8004/abi.ts` (real ValidationRegistry ABI from erc-8004-contracts repo — `validationRequest(address,uint256,string,bytes32)`, differs from spec placeholder), `src/attest-8004/attest.ts` (attest() IO function, Mantle mainnet via viem walletClient). ABI updated to match real deployed interface. ValidationRegistry Mantle address NOT in README — must confirm on mantlescan.xyz before live tx (see Open questions). `viem` exports `mantle` from `viem/chains` (confirmed v2.52.2). tsc clean, 30/30 tests pass. Committed (SHA: 681b090).
 - 2026-06-17 — Task 13 complete. Created `src/report/render-html.test.ts` (1 test: question/claim/confidence/dune-query-id/attestation-tx/chart.js all present). Created `src/report/render-html.ts` (renderReportHtml — pure HTML string builder with Chart.js bar chart, claim table, re-runnable source links, cost + attestation sections). Created `src/report/generate-pdf.ts` (htmlToPdf — headless Chromium via Playwright, networkidle wait + 600ms chart paint delay). TDD: test failed (module not found), impl written, 1 test passes. Playwright smoke test: wrote 52,272-byte PDF successfully. Scratch file + PDF deleted. `npx tsc --noEmit` clean. Committed (SHA: 480d912). Next: Task 14 — ERC-8004 attestation.
+- 2026-06-17 — Task 15 complete. Created `src/operator.test.ts` (2 tests: gate-pass → pdf+attest called; gate-fail → renderPdf+attest NOT called). Created `src/operator.ts` (runResearch — wires onchain+web scouts → synthesize → confidence scoring → runGate → conditional renderPdf+attest → telemetry). TDD: test failed (module not found), impl written, 2/2 tests pass. Full suite: 32/32 pass. `npx tsc --noEmit` clean. Committed (SHA: f55ed12). Next: Task 16 — CLI + cached fixture run.
