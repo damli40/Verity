@@ -2,15 +2,15 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-17 — by: Task 8 execution (synthesizer complete)
+**Last updated:** 2026-06-17 — by: Task 9 execution (LLM-as-judge complete)
 
 ---
 
 ## TL;DR (read this first)
 
 - **What:** Verity, a verification-first onchain-finance research agent. Mantle Research Challenge, Track 2. Deadline **July 3, 2026**.
-- **Where we are:** Tasks 0–8 complete. Synthesizer with provenance-tagged prompts built. Ready for Task 9 (LLM-as-judge).
-- **Next action:** Begin **Task 9** (LLM-as-judge) in the plan.
+- **Where we are:** Tasks 0–9 complete. LLM-as-judge (qualitative review) built. Ready for Task 10 (verification gate).
+- **Next action:** Begin **Task 10** (verification gate) in the plan.
 - **Spec:** `docs/superpowers/specs/2026-06-17-verity-onchain-research-agent-design.md`
 - **Plan:** `docs/superpowers/plans/2026-06-17-verity-onchain-research-agent.md`
 
@@ -33,7 +33,7 @@
 | 6 | onchain-finance-scout (allowlist) | ☑ done |
 | 7 | web-scout (Exa) | ☑ done |
 | 8 | Synthesizer (Claude) | ☑ done |
-| 9 | LLM-as-judge | ☐ |
+| 9 | LLM-as-judge | ☑ done |
 | 10 | Verification gate | ☐ |
 | 11 | Cost transparency | ☐ |
 | 12 | Telemetry (PostHog) | ☐ |
@@ -76,3 +76,4 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - 2026-06-17 — Task 6 complete. Created `src/scouts/onchain-finance-scout.test.ts` (2 tests: resolve allowlisted entities + reject unknowns). TDD: test failed (cannot find module), impl written (resolveTargets + runOnchainScout). All 2 tests pass. Committed (SHA: 049a1ce). Next: Task 7 — web-scout.
 - 2026-06-17 — Task 7 complete. Created `src/scouts/web-scout.test.ts` and `src/scouts/web-scout.ts`. TDD: test failed (cannot find module), impl written (shapeExaResults pure shaper + runWebScout fetch to Exa API with 6 results, text content, 500-char snippet truncation). 1 test passes. Committed (SHA: e458bdf). Handoff updated. Next: Task 8 — synthesizer.
 - 2026-06-17 — Task 8 complete. Created `src/synthesizer.test.ts` and `src/synthesizer.ts`. TDD: test failed (cannot find module), impl written (buildSynthesisPrompt pure prompt-builder + synthesize IO function calling Claude). 2 tests pass (prompt contains question/queryId/URLs/addresses + provenance/queryId instructions). `npx tsc --noEmit` clean. Committed (SHA: 6cccc9c). Next: Task 9 — LLM-as-judge.
+- 2026-06-17 — Task 9 complete. Created `src/verify/llm-judge.test.ts` (2 tests: prompt builder + verdict JSON parser). TDD: test failed (cannot find module), impl written (buildJudgePrompt, parseJudgeVerdict, judge async function with configurable VERITY_JUDGE_MODEL env var defaulting to claude-haiku-4-5-20251001). All 2 tests pass. `npx tsc --noEmit` clean. Committed (SHA: ab6b875). Next: Task 10 — verification gate.
