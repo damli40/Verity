@@ -2,7 +2,7 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-17 — by: planning session (pre-execution)
+**Last updated:** 2026-06-17 — by: Task 1 execution (core domain types complete)
 
 ---
 
@@ -10,7 +10,7 @@
 
 - **What:** Verity, a verification-first onchain-finance research agent. Mantle Research Challenge, Track 2. Deadline **July 3, 2026**.
 - **Where we are:** Design + implementation plan complete and approved. **No code written yet.** Repo dir `verity/` exists with `CLAUDE.md` + this file only.
-- **Next action:** Begin **Task 0** (repo scaffold) in the plan.
+- **Next action:** Begin **Task 1** (core domain types) in the plan.
 - **Spec:** `docs/superpowers/specs/2026-06-17-verity-onchain-research-agent-design.md`
 - **Plan:** `docs/superpowers/plans/2026-06-17-verity-onchain-research-agent.md`
 
@@ -24,8 +24,8 @@
 
 | # | Task | Status |
 |---|------|--------|
-| 0 | Repo scaffold | ☐ not started |
-| 1 | Core domain types | ☐ |
+| 0 | Repo scaffold | ☑ done |
+| 1 | Core domain types | ☑ done |
 | 2 | Address allowlist + loader | ☐ |
 | 3 | **Deterministic provenance checker (spine)** | ☐ |
 | 4 | Confidence scorer | ☐ |
@@ -67,3 +67,5 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 ## Progress log (append-only)
 
 - 2026-06-17 — Brainstormed + wrote spec; revised after external review (verification engine first, deterministic spine, allowlist, mainnet attestation, confidence scores, simplified cost). Wrote 17-task implementation plan. Created `verity/`, `CLAUDE.md`, `handoff.md`. No source code yet.
+- 2026-06-17 — Task 0 complete. Scaffold committed (SHA: 321cfd82d622ea5794b1d61b85f5c673296e5824). Dirs: src/ data/ evals/ fixtures/ examples/ posthog/ docs/superpowers/specs|plans/. Files: package.json, tsconfig.json, vitest.config.ts, .gitignore, .env.example, README.md. npm install: 106 packages (7 audit vulnerabilities, non-blocking). npx playwright install chromium: SUCCESS (Chrome 149 + headless shell downloaded). git identity set locally (Dami / demiladeakins@gmail.com).
+- 2026-06-17 — Task 1 complete. Created `src/types.ts` with 10 core domain types: ProvenanceRef, Metric, ConfidenceSignals, Claim, Report, DuneResultRef, AllowlistEntry, CheckFailure, CheckResult. Verified with `npx tsc --noEmit` (no errors). Committed (SHA: c55ee9900501aae8ed2ab2bc15a6cab1967cbf63).
