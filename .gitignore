@@ -2,4 +2,5 @@ node_modules/
 dist/
 .env
 examples/*.pdf
+!examples/mantle-rwa-q2-2026.pdf
 *.log

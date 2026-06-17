@@ -1,0 +1,28 @@
+{
+  "question": "Did Mantle's RWA growth actually accelerate in Q2 2026, and are tokenized-equity adoption claims supported onchain?",
+  "asOf": "2026-06-16",
+  "claims": [
+    {
+      "id": "c1",
+      "text": "Mantle RWA TVL reached $247.5M as of June 2026, up 27% on the quarter.",
+      "forwardLooking": false,
+      "metrics": [
+        { "label": "RWA TVL (USD)", "value": 247500000, "address": "0xAbC0000000000000000000000000000000000001", "provenance": { "kind": "dune", "queryId": 42, "column": "tvl_usd", "row": 0 } }
+      ]
+    },
+    {
+      "id": "c2",
+      "text": "Tokenized-equity volume on Mantle reached $12M, evidencing real distribution beyond issuance.",
+      "forwardLooking": false,
+      "metrics": [
+        { "label": "Tokenized-equity volume (USD)", "value": 12000000, "address": "0xAbC0000000000000000000000000000000000002", "provenance": { "kind": "dune", "queryId": 43, "column": "equity_volume_usd", "row": 0 } }
+      ]
+    },
+    {
+      "id": "c3",
+      "text": "InsightX may drive future AI-native prediction-market adoption on Mantle.",
+      "forwardLooking": true,
+      "metrics": []
+    }
+  ]
+}

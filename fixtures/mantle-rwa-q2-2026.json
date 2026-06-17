@@ -1,0 +1,10 @@
+{
+  "question": "Did Mantle's RWA growth actually accelerate in Q2 2026, and are tokenized-equity adoption claims supported onchain?",
+  "now": "2026-06-17",
+  "queryIds": [42, 43],
+  "dune": [
+    { "queryId": 42, "rows": [{ "tvl_usd": 247500000 }], "executedAt": "2026-06-16T00:00:00Z" },
+    { "queryId": 43, "rows": [{ "equity_volume_usd": 12000000 }], "executedAt": "2026-06-16T00:00:00Z" }
+  ],
+  "web": [{ "title": "Mantle Q1 2026 ecosystem report", "url": "https://x.com/Mantle_Official/status/2062546876197659114", "snippet": "RWA TVL up 27% to $247.5M" }]
+}
