@@ -2,15 +2,15 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-17 — by: Task 6 execution (onchain-finance-scout complete)
+**Last updated:** 2026-06-17 — by: Task 7 execution (web-scout complete)
 
 ---
 
 ## TL;DR (read this first)
 
 - **What:** Verity, a verification-first onchain-finance research agent. Mantle Research Challenge, Track 2. Deadline **July 3, 2026**.
-- **Where we are:** Tasks 0–6 complete. Deterministic verification spine (provenance checker + confidence scorer) + Dune client + allowlist-only entity resolver in place. Ready for Task 7 (web-scout).
-- **Next action:** Begin **Task 7** (web-scout) in the plan.
+- **Where we are:** Tasks 0–7 complete. Web search via Exa integrated. Ready for Task 8 (synthesizer).
+- **Next action:** Begin **Task 8** (synthesizer) in the plan.
 - **Spec:** `docs/superpowers/specs/2026-06-17-verity-onchain-research-agent-design.md`
 - **Plan:** `docs/superpowers/plans/2026-06-17-verity-onchain-research-agent.md`
 
@@ -31,7 +31,7 @@
 | 4 | **Confidence scorer** | ☑ done |
 | 5 | Dune client | ☑ done |
 | 6 | onchain-finance-scout (allowlist) | ☑ done |
-| 7 | web-scout (Exa) | ☐ |
+| 7 | web-scout (Exa) | ☑ done |
 | 8 | Synthesizer (Claude) | ☐ |
 | 9 | LLM-as-judge | ☐ |
 | 10 | Verification gate | ☐ |
@@ -74,3 +74,4 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - 2026-06-17 — Task 4 complete. Created `src/verify/confidence.ts` (scoreConfidence — auditable per-claim 0..100 confidence score). Created `src/verify/confidence.test.ts`. TDD: test failed (cannot find module), impl written (weighted: 30% sourceQuality + 25% sourceAgreement + 20% freshness + 25% onchainVerified), all 3 tests pass (high confidence for perfect signals, lower for weak signals, clamped 0..100). Committed (SHA: f096b99). Next: Task 5 — Dune client.
 - 2026-06-17 — Task 5 complete. Created `src/scouts/dune.test.ts` and `src/scouts/dune.ts`. TDD: test failed (cannot find module), impl written (shapeDuneResult pure shaper + getLatestDuneResults fetch), 1 test passes. Committed (SHA: 69de487). Next: Task 6 — onchain-finance-scout.
 - 2026-06-17 — Task 6 complete. Created `src/scouts/onchain-finance-scout.test.ts` (2 tests: resolve allowlisted entities + reject unknowns). TDD: test failed (cannot find module), impl written (resolveTargets + runOnchainScout). All 2 tests pass. Committed (SHA: 049a1ce). Next: Task 7 — web-scout.
+- 2026-06-17 — Task 7 complete. Created `src/scouts/web-scout.test.ts` and `src/scouts/web-scout.ts`. TDD: test failed (cannot find module), impl written (shapeExaResults pure shaper + runWebScout fetch to Exa API with 6 results, text content, 500-char snippet truncation). 1 test passes. Committed (SHA: e458bdf). Handoff updated. Next: Task 8 — synthesizer.
