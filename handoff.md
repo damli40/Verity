@@ -2,15 +2,15 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-17 — by: Task 12 execution (telemetry complete)
+**Last updated:** 2026-06-17 — by: Task 13 execution (report builder complete)
 
 ---
 
 ## TL;DR (read this first)
 
 - **What:** Verity, a verification-first onchain-finance research agent. Mantle Research Challenge, Track 2. Deadline **July 3, 2026**.
-- **Where we are:** Tasks 0–12 complete. Telemetry (PostHog) with injectable sink built. Ready for Task 13 (report builder).
-- **Next action:** Begin **Task 13** (report builder/PDF) in the plan.
+- **Where we are:** Tasks 0–13 complete. Report builder (HTML + Chart.js → Playwright PDF) complete. Ready for Task 14 (ERC-8004 attestation).
+- **Next action:** Begin **Task 14** (ERC-8004 attestation, Mantle mainnet) in the plan.
 - **Spec:** `docs/superpowers/specs/2026-06-17-verity-onchain-research-agent-design.md`
 - **Plan:** `docs/superpowers/plans/2026-06-17-verity-onchain-research-agent.md`
 
@@ -37,7 +37,7 @@
 | 10 | Verification gate | ☑ done |
 | 11 | Cost transparency | ☑ done |
 | 12 | Telemetry (PostHog) | ☑ done |
-| 13 | Report builder (PDF) | ☐ |
+| 13 | Report builder (PDF) | ☑ done |
 | 14 | ERC-8004 attestation | ☐ |
 | 15 | Operator orchestrator | ☐ |
 | 16 | CLI + cached fixture run | ☐ |
@@ -80,3 +80,4 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - 2026-06-17 — Task 10 complete. Created `src/verify/gate.ts` (runGate — deterministic-first hard gate with injected judgeFn) and `src/verify/gate.test.ts` (3 tests: deterministic short-circuit, full pass, judge rejection). TDD: test failed (cannot find module), impl written, all 3 tests pass. Full suite: 24/24 pass. `npx tsc --noEmit` clean. Committed (SHA: fdec0ee). Next: Task 11 — cost transparency.
 - 2026-06-17 — Task 11 complete. Created `src/cost.ts` (TokenUsage interface, estimateCost + actualCost shared pure function at 15µ USD/synth token + 1µ USD/judge token, timeSavedHours returning 4 hours). Created `src/cost.test.ts` (3 tests: positive estimate, positive actual, positive hours-saved). TDD: test failed (module not found), impl written, all 3 tests pass. `npx tsc --noEmit` clean. Committed (SHA: e697151). Next: Task 12 — telemetry (PostHog).
 - 2026-06-17 — Task 12 complete. Created `src/telemetry.test.ts` (1 test: captures run event with injected sink). Created `src/telemetry.ts` (RunMetrics interface, Sink interface with capture + shutdown, makeTelemetry factory, defaultSink with PostHog or no-op). TDD: test failed (module not found), impl written, 1 test passes. `npx tsc --noEmit` clean. Committed (SHA: 5b2942a). Next: Task 13 — report builder (PDF).
+- 2026-06-17 — Task 13 complete. Created `src/report/render-html.test.ts` (1 test: question/claim/confidence/dune-query-id/attestation-tx/chart.js all present). Created `src/report/render-html.ts` (renderReportHtml — pure HTML string builder with Chart.js bar chart, claim table, re-runnable source links, cost + attestation sections). Created `src/report/generate-pdf.ts` (htmlToPdf — headless Chromium via Playwright, networkidle wait + 600ms chart paint delay). TDD: test failed (module not found), impl written, 1 test passes. Playwright smoke test: wrote 52,272-byte PDF successfully. Scratch file + PDF deleted. `npx tsc --noEmit` clean. Committed (SHA: 480d912). Next: Task 14 — ERC-8004 attestation.
