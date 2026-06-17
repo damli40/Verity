@@ -1,0 +1,14 @@
+[
+  {
+    "name": "SPCXx (tokenized SpaceX)",
+    "address": "0x0000000000000000000000000000000000000000",
+    "chainId": 5000,
+    "provenance": "PLACEHOLDER — confirm on Mantle explorer + xStocks docs before live run"
+  },
+  {
+    "name": "InsightX market",
+    "address": "0x0000000000000000000000000000000000000000",
+    "chainId": 5000,
+    "provenance": "PLACEHOLDER — confirm on Mantle explorer before live run"
+  }
+]
