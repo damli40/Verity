@@ -2,15 +2,15 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-17 — by: Task 7 execution (web-scout complete)
+**Last updated:** 2026-06-17 — by: Task 8 execution (synthesizer complete)
 
 ---
 
 ## TL;DR (read this first)
 
 - **What:** Verity, a verification-first onchain-finance research agent. Mantle Research Challenge, Track 2. Deadline **July 3, 2026**.
-- **Where we are:** Tasks 0–7 complete. Web search via Exa integrated. Ready for Task 8 (synthesizer).
-- **Next action:** Begin **Task 8** (synthesizer) in the plan.
+- **Where we are:** Tasks 0–8 complete. Synthesizer with provenance-tagged prompts built. Ready for Task 9 (LLM-as-judge).
+- **Next action:** Begin **Task 9** (LLM-as-judge) in the plan.
 - **Spec:** `docs/superpowers/specs/2026-06-17-verity-onchain-research-agent-design.md`
 - **Plan:** `docs/superpowers/plans/2026-06-17-verity-onchain-research-agent.md`
 
@@ -32,7 +32,7 @@
 | 5 | Dune client | ☑ done |
 | 6 | onchain-finance-scout (allowlist) | ☑ done |
 | 7 | web-scout (Exa) | ☑ done |
-| 8 | Synthesizer (Claude) | ☐ |
+| 8 | Synthesizer (Claude) | ☑ done |
 | 9 | LLM-as-judge | ☐ |
 | 10 | Verification gate | ☐ |
 | 11 | Cost transparency | ☐ |
@@ -75,3 +75,4 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - 2026-06-17 — Task 5 complete. Created `src/scouts/dune.test.ts` and `src/scouts/dune.ts`. TDD: test failed (cannot find module), impl written (shapeDuneResult pure shaper + getLatestDuneResults fetch), 1 test passes. Committed (SHA: 69de487). Next: Task 6 — onchain-finance-scout.
 - 2026-06-17 — Task 6 complete. Created `src/scouts/onchain-finance-scout.test.ts` (2 tests: resolve allowlisted entities + reject unknowns). TDD: test failed (cannot find module), impl written (resolveTargets + runOnchainScout). All 2 tests pass. Committed (SHA: 049a1ce). Next: Task 7 — web-scout.
 - 2026-06-17 — Task 7 complete. Created `src/scouts/web-scout.test.ts` and `src/scouts/web-scout.ts`. TDD: test failed (cannot find module), impl written (shapeExaResults pure shaper + runWebScout fetch to Exa API with 6 results, text content, 500-char snippet truncation). 1 test passes. Committed (SHA: e458bdf). Handoff updated. Next: Task 8 — synthesizer.
+- 2026-06-17 — Task 8 complete. Created `src/synthesizer.test.ts` and `src/synthesizer.ts`. TDD: test failed (cannot find module), impl written (buildSynthesisPrompt pure prompt-builder + synthesize IO function calling Claude). 2 tests pass (prompt contains question/queryId/URLs/addresses + provenance/queryId instructions). `npx tsc --noEmit` clean. Committed (SHA: 6cccc9c). Next: Task 9 — LLM-as-judge.
