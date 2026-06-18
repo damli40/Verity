@@ -16,13 +16,23 @@ export function buildJudgePrompt(report: Report): string {
   ].join("\n");
 }
 
+/** Fail-closed: an empty or unparseable judge response is treated as NOT passed, never a crash. */
 export function parseJudgeVerdict(text: string): JudgeVerdict {
-  const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-  return JSON.parse(json) as JudgeVerdict;
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    return { passed: false, notes: "unparseable judge response (no JSON found)" };
+  }
+  try {
+    return JSON.parse(text.slice(start, end + 1)) as JudgeVerdict;
+  } catch {
+    return { passed: false, notes: "unparseable judge response (invalid JSON)" };
+  }
 }
 
 export async function judge(report: Report): Promise<JudgeVerdict> {
   const model = process.env.VERITY_JUDGE_MODEL ?? "claude-haiku-4-5-20251001";
-  const text = await complete({ model, prompt: buildJudgePrompt(report), maxTokens: 1024 });
+  // 4096 leaves room for reasoning models (o-series / gpt-5) that spend tokens before emitting content.
+  const text = await complete({ model, prompt: buildJudgePrompt(report), maxTokens: 4096 });
   return parseJudgeVerdict(text);
 }

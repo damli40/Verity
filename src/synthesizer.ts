@@ -65,8 +65,13 @@ export async function synthesize(
   const text = await complete({
     model,
     prompt: buildSynthesisPrompt(question, dune, web, allowedAddresses),
-    maxTokens: 4096,
+    // 8192 leaves room for reasoning models (o-series / gpt-5) plus the JSON report body.
+    maxTokens: 8192,
   });
-  const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-  return normalizeReport(JSON.parse(json));
+  const start = text.indexOf("{");
+  const end = text.lastIndexOf("}");
+  if (start === -1 || end === -1 || end < start) {
+    throw new Error("synthesizer returned no parseable JSON (model output was empty or non-JSON)");
+  }
+  return normalizeReport(JSON.parse(text.slice(start, end + 1)));
 }

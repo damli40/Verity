@@ -13,4 +13,16 @@ describe("llm-judge", () => {
     expect(v.passed).toBe(true);
     expect(v.notes).toBe("ok");
   });
+
+  it("fails closed on an empty response (no crash)", () => {
+    const v = parseJudgeVerdict("");
+    expect(v.passed).toBe(false);
+    expect(v.notes).toMatch(/unparseable/i);
+  });
+
+  it("fails closed on malformed JSON", () => {
+    const v = parseJudgeVerdict("{not valid json");
+    expect(v.passed).toBe(false);
+    expect(v.notes).toMatch(/unparseable/i);
+  });
 });
