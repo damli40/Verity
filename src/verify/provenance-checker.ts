@@ -5,8 +5,12 @@ import type {
   CheckResult,
   CheckFailure,
   Metric,
+  ScrapeResult,
+  SourceAllowlistEntry,
 } from "../types.js";
 import { isAllowed } from "../allowlist.js";
+import { parseFigure } from "./figures.js";
+import { hasRole } from "./source-allowlist.js";
 
 const REL_TOLERANCE = 0.005;          // 0.5% relative tolerance for numeric equality
 const FRESHNESS_WINDOW_DAYS = 45;     // dune data must be no older than this before asOf
@@ -21,12 +25,45 @@ function daysBetween(a: string, b: string): number {
   return (new Date(a).getTime() - new Date(b).getTime()) / 86_400_000;
 }
 
+function checkScrapeMetric(
+  claimId: string,
+  m: Metric,
+  scrapes: ScrapeResult[],
+  sourceAllowlist: SourceAllowlistEntry[],
+  asOf: string,
+): CheckFailure[] {
+  const fails: CheckFailure[] = [];
+  const p = m.provenance as Extract<Metric["provenance"], { kind: "scrape" }>;
+
+  if (!hasRole(p.domain, "corroboration", sourceAllowlist)) {
+    fails.push({ claimId, metricLabel: m.label, reason: `domain ${p.domain} not allowed to corroborate numbers` });
+  }
+  const scrape = scrapes.find((s) => s.url === p.url);
+  if (!scrape) {
+    fails.push({ claimId, metricLabel: m.label, reason: `no fresh scrape captured for ${p.url}` });
+    return fails;
+  }
+  if (!scrape.text.toLowerCase().includes(p.figure.toLowerCase())) {
+    fails.push({ claimId, metricLabel: m.label, reason: `figure "${p.figure}" not found in scraped page text` });
+  }
+  const parsed = parseFigure(p.figure);
+  if (parsed === null || Math.abs(parsed - m.value) >= 1) {
+    fails.push({ claimId, metricLabel: m.label, reason: `figure "${p.figure}" does not equal claimed value ${m.value}` });
+  }
+  if (daysBetween(asOf, scrape.scrapedAt) >= FRESHNESS_WINDOW_DAYS) {
+    fails.push({ claimId, metricLabel: m.label, reason: `stale scrape: ${scrape.scrapedAt} exceeds freshness window` });
+  }
+  return fails;
+}
+
 function checkMetric(
   claimId: string,
   m: Metric,
   dune: DuneResultRef[],
   allowlist: AllowlistEntry[],
   asOf: string,
+  scrapes: ScrapeResult[],
+  sourceAllowlist: SourceAllowlistEntry[],
 ): CheckFailure[] {
   const fails: CheckFailure[] = [];
 
@@ -67,6 +104,8 @@ function checkMetric(
         reason: `stale data: query ${queryId} executed ${result.executedAt}, exceeds freshness window`,
       });
     }
+  } else if (m.provenance.kind === "scrape") {
+    fails.push(...checkScrapeMetric(claimId, m, scrapes, sourceAllowlist, asOf));
   }
 
   return fails;
@@ -84,6 +123,8 @@ export function checkProvenance(
   dune: DuneResultRef[],
   allowlist: AllowlistEntry[],
   now: string,
+  scrapes: ScrapeResult[] = [],
+  sourceAllowlist: SourceAllowlistEntry[] = [],
 ): CheckResult {
   const failures: CheckFailure[] = [];
   const hasDigit = /\d/;
@@ -94,7 +135,7 @@ export function checkProvenance(
       failures.push({ claimId: claim.id, reason: `un-sourced figure in claim text with no metric` });
     }
     for (const m of claim.metrics) {
-      failures.push(...checkMetric(claim.id, m, dune, allowlist, report.asOf));
+      failures.push(...checkMetric(claim.id, m, dune, allowlist, report.asOf, scrapes, sourceAllowlist));
     }
   }
 
