@@ -2,15 +2,17 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-18 — by: post-review surgical fixes (entity resolution wiring + chart.js vendoring)
+**Last updated:** 2026-06-18 — by: end-of-session wrap (full OpenAI pipeline verified GREEN end-to-end)
 
 ---
 
 ## TL;DR (read this first)
 
 - **What:** Verity, a verification-first onchain-finance research agent. Mantle Research Challenge, Track 2. Deadline **July 3, 2026**.
-- **Where we are:** All 17 tasks complete. Documentation packaged (SKILL.md, README.md, posthog/events.md). Ready for final submission.
-- **Next action:** All 17 tasks complete — final review + submission (external: push repo public, X thread, Discord, form).
+- **Where we are:** Build complete (all 17 tasks) + post-build hardening. 45/45 tests, tsc clean. Repo PUBLIC at https://github.com/damli40/Verity (described + 10 topics). On-chain identity REGISTERED on Mantle mainnet (agentId 134). Both Anthropic + OpenAI providers verified end-to-end; full live `gpt-5` run passes both gates and renders an attested PDF (fixture mode = simulated tx).
+- **Next action (production):** Put real Dune query IDs (`VERITY_QUERY_IDS`) + explorer-verified Mantle contract addresses into `data/allowlist.json`, then run a non-fixture live run (`node --env-file=.env --import tsx src/cli.ts "..."`) for a REAL on-chain ValidationRegistry attestation. Then manual submission: X thread tagging @Mantle_Official (+ follow/like/share article), join Mantle creators Discord, submit form with wallet address.
+- **Run notes:** scripts read process.env directly → always run with `node --env-file=.env --import tsx <script>`. Cheap LLM test loop (no Dune/Exa): `VERITY_FIXTURE_LIVE_LLM=1 node --env-file=.env --import tsx src/cli.ts --fixture` (use `VERITY_SYNTH_MODEL=gpt-5-2025-08-07` for a passing run; weaker synth models may be rejected by the judge).
+- **Confirmed addresses (Mantle mainnet, chainId 5000):** ValidationRegistry `0x8004Cc8439f36fd5F9F049D9fF86523Df6dAAB58`, Identity `0x8004A169FB4a3325136EB29fA0ceB6D2e539a432`. Agent: agentId 134, validatorAddress `0x36599B0286D3c32F934BC8877eeA839D88f3AFFC` (in `.env`).
 - **Spec:** `docs/superpowers/specs/2026-06-17-verity-onchain-research-agent-design.md`
 - **Plan:** `docs/superpowers/plans/2026-06-17-verity-onchain-research-agent.md`
 
