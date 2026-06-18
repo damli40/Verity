@@ -1,4 +1,4 @@
-import type { Report, DuneResultRef, AllowlistEntry, CheckFailure } from "../types.js";
+import type { Report, DuneResultRef, AllowlistEntry, CheckFailure, ScrapeResult, SourceAllowlistEntry } from "../types.js";
 import { checkProvenance } from "./provenance-checker.js";
 import type { JudgeVerdict } from "./llm-judge.js";
 
@@ -20,8 +20,10 @@ export async function runGate(
   allowlist: AllowlistEntry[],
   now: string,
   judgeFn: (r: Report) => Promise<JudgeVerdict>,
+  scrapes: ScrapeResult[] = [],
+  sourceAllowlist: SourceAllowlistEntry[] = [],
 ): Promise<GateResult> {
-  const det = checkProvenance(report, dune, allowlist, now);
+  const det = checkProvenance(report, dune, allowlist, now, scrapes, sourceAllowlist);
   if (!det.passed) return { passed: false, stage: "deterministic", failures: det.failures };
 
   const verdict = await judgeFn(report);

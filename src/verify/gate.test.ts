@@ -1,6 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { runGate } from "./gate.js";
-import type { Report, DuneResultRef, AllowlistEntry } from "../types.js";
+import type { Report, DuneResultRef, AllowlistEntry, ScrapeResult, SourceAllowlistEntry } from "../types.js";
 
 const allowlist: AllowlistEntry[] = [
   { name: "X", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, category: "tokenized-treasuries", status: "verified", provenance: "t" },
@@ -36,5 +36,21 @@ describe("runGate", () => {
     const r = await runGate(goodReport, dune, allowlist, "2026-06-17", judgeFn);
     expect(r.passed).toBe(false);
     expect(r.stage).toBe("qualitative");
+  });
+
+  it("admits a corroborated scrape claim through the deterministic stage", async () => {
+    const scrapes: ScrapeResult[] = [
+      { url: "https://defillama.com/chain/Mantle", domain: "defillama.com",
+        text: "Mantle RWA total value is $241,080,948.", scrapedAt: "2026-06-17T00:00:00Z" },
+    ];
+    const srcAllow: SourceAllowlistEntry[] = [{ domain: "defillama.com", roles: ["corroboration"] }];
+    const report: Report = { question: "q", asOf: "2026-06-18",
+      claims: [{ id: "s1", text: "Mantle RWA total is $241,080,948", forwardLooking: false,
+        metrics: [{ label: "Mantle RWA total", value: 241_080_948,
+          provenance: { kind: "scrape", domain: "defillama.com", url: "https://defillama.com/chain/Mantle",
+            scrapedAt: "2026-06-17T00:00:00Z", scope: "mantle-specific", figure: "$241,080,948" } }] }] };
+    const judgeFn = async () => ({ passed: true, notes: "ok" });
+    const r = await runGate(report, [], [], "2026-06-18", judgeFn, scrapes, srcAllow);
+    expect(r.passed).toBe(true);
   });
 });
