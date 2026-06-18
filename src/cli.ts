@@ -15,6 +15,9 @@ import type { Report } from "./types.js";
 const fixtureMode = process.argv.includes("--fixture");
 const telemetry = makeTelemetry(defaultSink());
 const outPdf = "examples/mantle-rwa-q2-2026.pdf";
+// Public, resolvable pointer to the attested report (the on-chain requestHash anchors the actual
+// bytes; this URI just lets a verifier fetch them). Overridable for other deployments.
+const reportUri = process.env.VERITY_REPORT_URI ?? `https://raw.githubusercontent.com/damli40/Verity/main/${outPdf}`;
 
 async function renderPdf(report: Report, meta: ReportMeta): Promise<string> {
   await htmlToPdf(renderReportHtml(report, meta), outPdf);
@@ -63,12 +66,12 @@ async function main(): Promise<void> {
         requestHash: hashFile(pdf),
         validatorAddress: process.env.VERITY_VALIDATOR_ADDRESS as `0x${string}`,
         agentId: BigInt(process.env.VERITY_AGENT_ID ?? "0"),
-        requestURI: outPdf,
+        requestURI: reportUri,
       }),
     telemetry,
   };
   const out = await runResearch(
-    { question, entities: ["SPCXx", "InsightX"], queryIds, allowlist, now: new Date().toISOString().slice(0, 10) },
+    { question, entities: ["USDY", "mUSD"], queryIds, allowlist, now: new Date().toISOString().slice(0, 10) },
     deps,
   );
   console.log(JSON.stringify(out, null, 2));

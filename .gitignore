@@ -4,3 +4,5 @@ dist/
 examples/*.pdf
 !examples/mantle-rwa-q2-2026.pdf
 *.log
+
+.DS_Store
