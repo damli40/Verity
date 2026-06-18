@@ -40,7 +40,7 @@ export async function runResearch(input: ResearchInput, deps: ResearchDeps): Pro
 
   // Attach auditable confidence to each claim before gating.
   for (const c of report.claims) {
-    const onchainVerified = c.metrics.some((m) => m.provenance.kind === "dune");
+    const onchainVerified = c.metrics.some((m) => m.provenance?.kind === "dune");
     c.signals = { sourceQuality: 0.9, sourceAgreement: 0.85, freshness: 0.9, onchainVerified };
     c.confidence = scoreConfidence(c.signals);
   }

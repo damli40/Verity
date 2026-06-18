@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { buildSynthesisPrompt } from "./synthesizer.js";
+import { buildSynthesisPrompt, normalizeReport } from "./synthesizer.js";
 import type { DuneResultRef } from "./types.js";
 import type { WebSource } from "./scouts/web-scout.js";
 
@@ -19,5 +19,25 @@ describe("buildSynthesisPrompt", () => {
     const p = buildSynthesisPrompt("q", dune, web, []);
     expect(p.toLowerCase()).toContain("provenance");
     expect(p.toLowerCase()).toContain("queryid");
+  });
+});
+
+describe("normalizeReport", () => {
+  it("defaults a claim's missing metrics to an empty array", () => {
+    const r = normalizeReport({ question: "q", asOf: "2026-06-16", claims: [{ id: "c1", text: "t" }] });
+    expect(r.claims[0].metrics).toEqual([]);
+    expect(r.claims[0].forwardLooking).toBe(false);
+  });
+
+  it("coerces missing top-level fields without throwing", () => {
+    const r = normalizeReport({});
+    expect(r.claims).toEqual([]);
+    expect(r.question).toBe("");
+  });
+
+  it("preserves well-formed metrics (including bad provenance) for the checker to judge", () => {
+    const raw = { question: "q", asOf: "2026-06-16", claims: [{ id: "c1", text: "t", metrics: [{ label: "x", value: 1 }] }] };
+    const r = normalizeReport(raw);
+    expect(r.claims[0].metrics).toHaveLength(1);
   });
 });

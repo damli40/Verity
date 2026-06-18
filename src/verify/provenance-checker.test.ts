@@ -71,6 +71,14 @@ describe("checkProvenance", () => {
     expect(r.failures[0].reason).toMatch(/un-sourced figure/i);
   });
 
+  it("fails when a metric has no provenance at all (malformed model output)", () => {
+    const rep = baseReport();
+    delete (rep.claims[0].metrics[0] as { provenance?: unknown }).provenance;
+    const r = checkProvenance(rep, dune, allowlist, "2026-06-17");
+    expect(r.passed).toBe(false);
+    expect(r.failures[0].reason).toMatch(/no provenance/i);
+  });
+
   it("fails when the dune data is stale relative to asOf", () => {
     const staleDune: DuneResultRef[] = [
       { queryId: 42, rows: [{ tvl_usd: 247_500_000 }], executedAt: "2026-05-01T00:00:00Z" },

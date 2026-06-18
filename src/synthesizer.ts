@@ -31,6 +31,29 @@ export function buildSynthesisPrompt(
   ].join("\n");
 }
 
+/**
+ * Coerce raw model JSON into a well-formed Report so downstream code (operator, checker) can
+ * trust the shape. Malformed claims/metrics are kept but normalized — bad metric provenance is
+ * then caught fail-closed by the deterministic checker, never crashing the pipeline.
+ */
+export function normalizeReport(raw: unknown): Report {
+  const r = (raw ?? {}) as Record<string, unknown>;
+  const claims = Array.isArray(r.claims) ? r.claims : [];
+  return {
+    question: typeof r.question === "string" ? r.question : "",
+    asOf: typeof r.asOf === "string" ? r.asOf : "",
+    claims: claims.map((c) => {
+      const cc = (c ?? {}) as Record<string, unknown>;
+      return {
+        id: String(cc.id ?? ""),
+        text: String(cc.text ?? ""),
+        forwardLooking: Boolean(cc.forwardLooking),
+        metrics: Array.isArray(cc.metrics) ? (cc.metrics as Report["claims"][number]["metrics"]) : [],
+      };
+    }),
+  };
+}
+
 /** Calls the configured synthesis model (Anthropic or OpenAI) and parses the Report JSON. */
 export async function synthesize(
   question: string,
@@ -45,5 +68,5 @@ export async function synthesize(
     maxTokens: 4096,
   });
   const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
-  return JSON.parse(json) as Report;
+  return normalizeReport(JSON.parse(json));
 }

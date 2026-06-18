@@ -34,6 +34,13 @@ function checkMetric(
     fails.push({ claimId, metricLabel: m.label, reason: `address ${m.address} not on allowlist` });
   }
 
+  // Fail-closed: a metric with no provenance (e.g. malformed model output) cannot be traced to a
+  // source, so it can never be verified — reject it rather than letting an un-sourced number through.
+  if (!m.provenance) {
+    fails.push({ claimId, metricLabel: m.label, reason: `metric has no provenance (un-sourced figure)` });
+    return fails;
+  }
+
   if (m.provenance.kind === "dune") {
     const { queryId, column, row } = m.provenance;
     const result = dune.find((d) => d.queryId === queryId);
