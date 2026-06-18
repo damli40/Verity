@@ -172,3 +172,50 @@ describe("checkProvenance — scrape (corroborated) tier", () => {
     expect(r.failures.some((f) => /does not equal claimed value/.test(f.reason))).toBe(true);
   });
 });
+
+describe("checkProvenance — global-vs-Mantle accuracy rule", () => {
+  const globalScrapes: ScrapeResult[] = [
+    {
+      url: "https://defillama.com/x",
+      domain: "defillama.com",
+      text: "USDY global AUM is $2.15B.",
+      scrapedAt: "2026-06-17T00:00:00Z",
+    },
+  ];
+  function globalReport(label: string): Report {
+    return {
+      question: "q",
+      asOf: "2026-06-18",
+      claims: [
+        {
+          id: "g1",
+          text: "USDY AUM is $2.15B",
+          forwardLooking: false,
+          metrics: [
+            {
+              label,
+              value: 2_150_000_000,
+              provenance: {
+                kind: "scrape",
+                domain: "defillama.com",
+                url: "https://defillama.com/x",
+                scrapedAt: "2026-06-17T00:00:00Z",
+                scope: "global",
+                figure: "$2.15B",
+              },
+            },
+          ],
+        },
+      ],
+    };
+  }
+  it("rejects a global figure that is NOT labeled 'global'", () => {
+    const r = checkProvenance(globalReport("USDY AUM"), [], [], "2026-06-18", globalScrapes, sourceAllowlist);
+    expect(r.passed).toBe(false);
+    expect(r.failures.some((f) => /global figure must be labeled/.test(f.reason))).toBe(true);
+  });
+  it("accepts a global figure when labeled 'global'", () => {
+    const r = checkProvenance(globalReport("USDY global AUM (all networks)"), [], [], "2026-06-18", globalScrapes, sourceAllowlist);
+    expect(r.passed).toBe(true);
+  });
+});

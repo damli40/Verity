@@ -53,6 +53,10 @@ function checkScrapeMetric(
   if (daysBetween(asOf, scrape.scrapedAt) >= FRESHNESS_WINDOW_DAYS) {
     fails.push({ claimId, metricLabel: m.label, reason: `stale scrape: ${scrape.scrapedAt} exceeds freshness window` });
   }
+  // Accuracy rule: a global / cross-network figure must say so, so it can never masquerade as the Mantle number.
+  if (p.scope === "global" && !/global/i.test(m.label)) {
+    fails.push({ claimId, metricLabel: m.label, reason: `global figure must be labeled "global" (got "${m.label}")` });
+  }
   return fails;
 }
 
