@@ -3,7 +3,7 @@ import { checkProvenance } from "./provenance-checker.js";
 import type { Report, DuneResultRef, AllowlistEntry } from "../types.js";
 
 const allowlist: AllowlistEntry[] = [
-  { name: "X", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, provenance: "test" },
+  { name: "X", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, category: "tokenized-treasuries", status: "verified", provenance: "test" },
 ];
 
 const dune: DuneResultRef[] = [

@@ -3,7 +3,7 @@ import { runGate } from "./gate.js";
 import type { Report, DuneResultRef, AllowlistEntry } from "../types.js";
 
 const allowlist: AllowlistEntry[] = [
-  { name: "X", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, provenance: "t" },
+  { name: "X", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, category: "tokenized-treasuries", status: "verified", provenance: "t" },
 ];
 const dune: DuneResultRef[] = [{ queryId: 42, rows: [{ tvl_usd: 247_500_000 }], executedAt: "2026-06-16T00:00:00Z" }];
 const goodReport: Report = {

@@ -1,4 +1,4 @@
 [
-  { "name": "SPCXx", "address": "0xAbC0000000000000000000000000000000000001", "chainId": 5000, "provenance": "FIXTURE demo address — not a real contract" },
-  { "name": "InsightX", "address": "0xAbC0000000000000000000000000000000000002", "chainId": 5000, "provenance": "FIXTURE demo address — not a real contract" }
+  { "name": "SPCXx", "address": "0xAbC0000000000000000000000000000000000001", "chainId": 5000, "category": "tokenized-treasuries", "status": "verified", "provenance": "FIXTURE demo address — not a real contract" },
+  { "name": "InsightX", "address": "0xAbC0000000000000000000000000000000000002", "chainId": 5000, "category": "tokenized-treasuries", "status": "verified", "provenance": "FIXTURE demo address — not a real contract" }
 ]
