@@ -22,6 +22,7 @@ describe("renderReportHtml", () => {
     expect(html).toContain("98");
     expect(html).toContain("42");      // dune query id in sources
     expect(html).toContain("0xabc");   // attestation tx
-    expect(html).toContain("cdn.jsdelivr.net/npm/chart.js"); // chart lib included
+    expect(html).not.toContain("cdn.jsdelivr.net");
+    expect(html).toContain("new Chart(");
   });
 });

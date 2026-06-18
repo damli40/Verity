@@ -4,6 +4,7 @@ import type { JudgeVerdict } from "./verify/llm-judge.js";
 import { runGate } from "./verify/gate.js";
 import { scoreConfidence } from "./verify/confidence.js";
 import { estimateCost, actualCost, timeSavedHours } from "./cost.js";
+import { resolveTargets } from "./scouts/onchain-finance-scout.js";
 
 export interface ResearchInput {
   question: string;
@@ -32,7 +33,7 @@ export interface ResearchOutput {
 
 export async function runResearch(input: ResearchInput, deps: ResearchDeps): Promise<ResearchOutput> {
   const started = Date.now();
-  const addrs = input.allowlist.map((e) => e.address);
+  const addrs = resolveTargets(input.entities, input.allowlist).map((t) => t.address);
 
   const [dune, web] = await Promise.all([deps.onchain(input.queryIds), deps.web(input.question)]);
   const report = await deps.synthesize(input.question, dune, web, addrs);

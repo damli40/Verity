@@ -1,4 +1,12 @@
 import type { Report } from "../types.js";
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { join, dirname } from "node:path";
+
+const CHART_JS = readFileSync(
+  join(dirname(fileURLToPath(import.meta.url)), "../../node_modules/chart.js/dist/chart.umd.js"),
+  "utf8",
+);
 
 export interface ReportMeta {
   attestationTx: string;
@@ -31,7 +39,7 @@ export function renderReportHtml(report: Report, meta: ReportMeta): string {
 
   return `<!doctype html><html><head><meta charset="utf-8">
 <title>Verity — ${escapeHtml(report.question)}</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4"></script>
+<script>${CHART_JS}</script>
 <style>
  body{font-family:-apple-system,Segoe UI,Roboto,sans-serif;margin:48px;color:#111}
  h1{font-size:22px} table{border-collapse:collapse;width:100%;margin:16px 0}

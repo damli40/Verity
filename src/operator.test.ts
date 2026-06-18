@@ -36,6 +36,23 @@ describe("runResearch", () => {
     expect(deps.telemetry.runCompleted).toHaveBeenCalledOnce();
   });
 
+  it("passes only entity-resolved allowlisted addresses to the synthesizer", async () => {
+    const spy = vi.fn(async () => structuredClone(report));
+    const localDeps = { ...deps, synthesize: spy };
+    await runResearch(
+      { question: "q", entities: ["X"], queryIds: [42], allowlist, now: "2026-06-17" },
+      localDeps as any,
+    );
+    expect((spy.mock.calls[0] as any[])[3]).toEqual(["0xAbC0000000000000000000000000000000000001"]);
+
+    const spy2 = vi.fn(async () => structuredClone(report));
+    await runResearch(
+      { question: "q", entities: ["Unknown"], queryIds: [42], allowlist, now: "2026-06-17" },
+      { ...deps, synthesize: spy2 } as any,
+    );
+    expect((spy2.mock.calls[0] as any[])[3]).toEqual([]);
+  });
+
   it("does NOT render or attest when the gate fails", async () => {
     const badDeps = { ...deps, renderPdf: vi.fn(), attest: vi.fn(),
       synthesize: vi.fn(async () => { const r = structuredClone(report); r.claims[0].metrics[0].value = 1; return r; }) };
