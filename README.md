@@ -40,7 +40,8 @@ The field is full of "AI research agents" competing on autonomy and speed. Verit
 1. `npm install && npx playwright install chromium`
 2. Copy `.env.example` → `.env`, fill keys (Dune, Exa, Anthropic, Mantle).
 3. **Offline demo (no keys needed):** `npx tsx src/cli.ts --fixture` → writes `examples/mantle-rwa-q2-2026.pdf`.
-4. **Live:** set `VERITY_QUERY_IDS=<comma,separated,dune,ids>`, then `npx tsx src/cli.ts "your question"`.
+4. **Register the agent (once):** `npx tsx src/attest-8004/register.ts` → mints the ERC-8004 agentId on Mantle and prints `VERITY_AGENT_ID` + `VERITY_VALIDATOR_ADDRESS` to paste into `.env`.
+5. **Live:** set `VERITY_QUERY_IDS=<comma,separated,dune,ids>`, then `npx tsx src/cli.ts "your question"`.
 
 ## How it's built
 TypeScript + vitest, fully TDD. Spine = `src/verify/provenance-checker.ts` (deterministic). See `docs/superpowers/` for the full design + plan. Packaged as a Mantle Agent Skill (`SKILL.md`).

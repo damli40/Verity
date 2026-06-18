@@ -30,3 +30,32 @@ export const validationRegistryAbi = [
     outputs: [],
   },
 ] as const;
+
+// IdentityRegistry — register an agent to mint its ERC-721 agentId. Verified on Mantle mainnet
+// (0x8004A169FB4a3325136EB29fA0ceB6D2e539a432). Only the `register(string)` overload is included
+// so viem resolves it unambiguously; the minted id is read from the Registered event.
+export const identityRegistryAbi = [
+  {
+    type: "function",
+    name: "register",
+    stateMutability: "nonpayable",
+    inputs: [{ name: "agentURI", type: "string" }],
+    outputs: [{ name: "agentId", type: "uint256" }],
+  },
+  {
+    type: "function",
+    name: "getAgentWallet",
+    stateMutability: "view",
+    inputs: [{ name: "agentId", type: "uint256" }],
+    outputs: [{ name: "", type: "address" }],
+  },
+  {
+    type: "event",
+    name: "Registered",
+    inputs: [
+      { name: "agentId", type: "uint256", indexed: true },
+      { name: "agentURI", type: "string", indexed: false },
+      { name: "owner", type: "address", indexed: true },
+    ],
+  },
+] as const;
