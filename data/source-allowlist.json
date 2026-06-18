@@ -1,0 +1,7 @@
+[
+  { "domain": "app.rwa.xyz", "roles": ["discovery"] },
+  { "domain": "defillama.com", "roles": ["discovery", "corroboration"] },
+  { "domain": "messari.io", "roles": ["discovery", "corroboration"] },
+  { "domain": "mantle.xyz", "roles": ["corroboration"] },
+  { "domain": "docs.ondo.finance", "roles": ["corroboration"] }
+]
