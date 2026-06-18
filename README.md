@@ -43,6 +43,12 @@ The field is full of "AI research agents" competing on autonomy and speed. Verit
 4. **Register the agent (once):** `npx tsx src/attest-8004/register.ts` → mints the ERC-8004 agentId on Mantle and prints `VERITY_AGENT_ID` + `VERITY_VALIDATOR_ADDRESS` to paste into `.env`.
 5. **Live:** set `VERITY_QUERY_IDS=<comma,separated,dune,ids>`, then `npx tsx src/cli.ts "your question"`.
 
+## Model providers
+The synthesizer and judge are provider-agnostic. Default is Anthropic; to test with OpenAI set
+`VERITY_LLM_PROVIDER=openai`, `OPENAI_API_KEY`, and point `VERITY_SYNTH_MODEL` / `VERITY_JUDGE_MODEL`
+at OpenAI model names. To exercise the real LLM path cheaply over cached data (no Dune/Exa keys):
+`VERITY_FIXTURE_LIVE_LLM=1 npx tsx src/cli.ts --fixture`.
+
 ## How it's built
 TypeScript + vitest, fully TDD. Spine = `src/verify/provenance-checker.ts` (deterministic). See `docs/superpowers/` for the full design + plan. Packaged as a Mantle Agent Skill (`SKILL.md`).
 

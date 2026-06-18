@@ -26,11 +26,15 @@ async function main(): Promise<void> {
     const fx = JSON.parse(readFileSync("fixtures/mantle-rwa-q2-2026.json", "utf8"));
     const allowlist = loadAllowlist("data/allowlist.fixture.json");
     const fixtureReport = JSON.parse(readFileSync("fixtures/report.json", "utf8")) as Report;
+    // VERITY_FIXTURE_LIVE_LLM=1 exercises the REAL synthesizer + judge (e.g. OpenAI models) over the
+    // cached scout data — a cheap way to test the LLM path without Dune/Exa keys. Default is fully
+    // offline (no LLM calls): synth returns the cached report, judge auto-passes.
+    const liveLlm = Boolean(process.env.VERITY_FIXTURE_LIVE_LLM);
     const deps: ResearchDeps = {
       onchain: async () => fx.dune,
       web: async () => fx.web,
-      synthesize: async () => structuredClone(fixtureReport), // offline: no Anthropic call
-      judge: async () => ({ passed: true, notes: "fixture: qualitative review stubbed offline" }),
+      synthesize: liveLlm ? synthesize : async () => structuredClone(fixtureReport),
+      judge: liveLlm ? judge : async () => ({ passed: true, notes: "fixture: qualitative review stubbed offline" }),
       renderPdf,
       attest: async (pdf) => `simulated-0x${hashFile(pdf).slice(2, 14)}`, // offline demo: no real tx
       telemetry,

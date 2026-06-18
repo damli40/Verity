@@ -1,6 +1,6 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { Report, DuneResultRef } from "./types.js";
 import type { WebSource } from "./scouts/web-scout.js";
+import { complete } from "./llm.js";
 
 export function buildSynthesisPrompt(
   question: string,
@@ -31,21 +31,19 @@ export function buildSynthesisPrompt(
   ].join("\n");
 }
 
-/** Calls the configured synthesis model and parses the Report JSON. */
+/** Calls the configured synthesis model (Anthropic or OpenAI) and parses the Report JSON. */
 export async function synthesize(
   question: string,
   dune: DuneResultRef[],
   web: WebSource[],
   allowedAddresses: string[],
 ): Promise<Report> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.VERITY_SYNTH_MODEL ?? "claude-opus-4-8";
-  const msg = await client.messages.create({
+  const text = await complete({
     model,
-    max_tokens: 4096,
-    messages: [{ role: "user", content: buildSynthesisPrompt(question, dune, web, allowedAddresses) }],
+    prompt: buildSynthesisPrompt(question, dune, web, allowedAddresses),
+    maxTokens: 4096,
   });
-  const text = msg.content.map((b) => (b.type === "text" ? b.text : "")).join("");
   const json = text.slice(text.indexOf("{"), text.lastIndexOf("}") + 1);
   return JSON.parse(json) as Report;
 }

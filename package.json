@@ -13,6 +13,7 @@
   "dependencies": {
     "@anthropic-ai/sdk": "^0.40.0",
     "chart.js": "^4.5.1",
+    "openai": "^4.104.0",
     "posthog-node": "^4.2.0",
     "viem": "^2.21.0"
   },

@@ -1,5 +1,5 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { Report } from "../types.js";
+import { complete } from "../llm.js";
 
 export interface JudgeVerdict {
   passed: boolean;
@@ -22,13 +22,7 @@ export function parseJudgeVerdict(text: string): JudgeVerdict {
 }
 
 export async function judge(report: Report): Promise<JudgeVerdict> {
-  const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   const model = process.env.VERITY_JUDGE_MODEL ?? "claude-haiku-4-5-20251001";
-  const msg = await client.messages.create({
-    model,
-    max_tokens: 1024,
-    messages: [{ role: "user", content: buildJudgePrompt(report) }],
-  });
-  const text = msg.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  const text = await complete({ model, prompt: buildJudgePrompt(report), maxTokens: 1024 });
   return parseJudgeVerdict(text);
 }

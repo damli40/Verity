@@ -44,7 +44,7 @@ export async function registerAgent(agentURI: string): Promise<RegisteredAgent> 
 // CLI entry: `npx tsx src/attest-8004/register.ts [agentURI]`
 if (import.meta.url === pathToFileURL(process.argv[1] ?? "").href) {
   const agentURI =
-    process.argv[2] ?? process.env.VERITY_AGENT_URI ?? "https://github.com/verity/verity";
+    process.argv[2] ?? process.env.VERITY_AGENT_URI ?? "https://github.com/damli40/Verity";
   registerAgent(agentURI)
     .then((r) => {
       console.log("Registered Verity agent on Mantle Identity Registry.");
