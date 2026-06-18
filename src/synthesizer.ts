@@ -26,8 +26,19 @@ export function buildSynthesisPrompt(
     `- asOf = the most recent Dune executedAt date (YYYY-MM-DD).`,
     `- Every numeric metric MUST carry provenance { kind:"dune", queryId, column, row } pointing`,
     `  at the exact cell, and metric.value MUST equal that cell verbatim. Never compute or round.`,
+    `- Every metric MUST include a descriptive "label" string.`,
     `- Speculative/predictive claims must set forwardLooking:true and carry no metrics.`,
     `- Do not state any number you cannot back with a dune cell.`,
+    ``,
+    `ANALYSIS QUALITY (a reviewer will reject thin reports):`,
+    `- The FIRST claim must give a direct, explicit answer to the QUESTION (e.g. "Yes — ..." / "No — ...")`,
+    `  with the headline reasoning, backed by metrics.`,
+    `- Answer EVERY part of the QUESTION. If it has sub-questions, cover each in its own claim.`,
+    `- Each claim's "text" must be a complete, self-contained sentence that names the time period`,
+    `  (e.g. "Q2 2026"), interprets the numbers, and states the implication — never bare data.`,
+    `- To judge acceleration, compare consecutive periods' growth rates explicitly using the QoQ data.`,
+    `- Tie tokenized-equity volume figures directly to the adoption sub-question.`,
+    `- Produce 4-6 claims total; mark genuinely forward-looking statements forwardLooking:true.`,
   ].join("\n");
 }
 
@@ -44,11 +55,22 @@ export function normalizeReport(raw: unknown): Report {
     asOf: typeof r.asOf === "string" ? r.asOf : "",
     claims: claims.map((c) => {
       const cc = (c ?? {}) as Record<string, unknown>;
+      const rawMetrics = Array.isArray(cc.metrics) ? cc.metrics : [];
       return {
         id: String(cc.id ?? ""),
         text: String(cc.text ?? ""),
         forwardLooking: Boolean(cc.forwardLooking),
-        metrics: Array.isArray(cc.metrics) ? (cc.metrics as Report["claims"][number]["metrics"]) : [],
+        metrics: rawMetrics.map((m) => {
+          const mm = (m ?? {}) as Record<string, unknown>;
+          return {
+            label: String(mm.label ?? ""),
+            value: typeof mm.value === "number" ? mm.value : Number(mm.value),
+            ...(typeof mm.unit === "string" ? { unit: mm.unit } : {}),
+            ...(typeof mm.address === "string" ? { address: mm.address } : {}),
+            // Pass provenance through as-is; the deterministic checker fails-closed if it's missing/invalid.
+            provenance: mm.provenance as Report["claims"][number]["metrics"][number]["provenance"],
+          };
+        }),
       };
     }),
   };

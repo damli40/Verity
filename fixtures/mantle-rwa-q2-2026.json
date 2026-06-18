@@ -1,10 +1,31 @@
 {
   "question": "Did Mantle's RWA growth actually accelerate in Q2 2026, and are tokenized-equity adoption claims supported onchain?",
   "now": "2026-06-17",
-  "queryIds": [42, 43],
+  "queryIds": [42, 43, 44, 45],
   "dune": [
     { "queryId": 42, "rows": [{ "tvl_usd": 247500000 }], "executedAt": "2026-06-16T00:00:00Z" },
-    { "queryId": 43, "rows": [{ "equity_volume_usd": 12000000 }], "executedAt": "2026-06-16T00:00:00Z" }
+    { "queryId": 43, "rows": [{ "period": "Q2-2026", "equity_volume_usd": 12000000 }], "executedAt": "2026-06-16T00:00:00Z" },
+    {
+      "queryId": 44,
+      "rows": [
+        { "quarter": "Q3-2025", "rwa_tvl_usd": 150000000, "qoq_growth_pct": 9 },
+        { "quarter": "Q4-2025", "rwa_tvl_usd": 168000000, "qoq_growth_pct": 12 },
+        { "quarter": "Q1-2026", "rwa_tvl_usd": 195000000, "qoq_growth_pct": 16 },
+        { "quarter": "Q2-2026", "rwa_tvl_usd": 247500000, "qoq_growth_pct": 27 }
+      ],
+      "executedAt": "2026-06-16T00:00:00Z"
+    },
+    {
+      "queryId": 45,
+      "rows": [
+        { "period": "Q1-2026", "equity_volume_usd": 4100000 },
+        { "period": "Q2-2026", "equity_volume_usd": 12000000 }
+      ],
+      "executedAt": "2026-06-16T00:00:00Z"
+    }
   ],
-  "web": [{ "title": "Mantle Q1 2026 ecosystem report", "url": "https://x.com/Mantle_Official/status/2062546876197659114", "snippet": "RWA TVL up 27% to $247.5M" }]
+  "web": [
+    { "title": "Mantle Q1 2026 ecosystem report", "url": "https://x.com/Mantle_Official/status/2062546876197659114", "snippet": "RWA TVL up 27% to $247.5M" },
+    { "title": "Tokenized SpaceX (SPCXx) live on Mantle", "url": "https://x.com/Mantle_Official/status/2065471800583327937", "snippet": "Tokenized equities via xStocks executed on Mantle" }
+  ]
 }

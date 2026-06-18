@@ -3,6 +3,17 @@
   "asOf": "2026-06-16",
   "claims": [
     {
+      "id": "c0",
+      "text": "Yes — Mantle RWA growth accelerated in Q2 2026: quarter-over-quarter RWA TVL growth rose from 16% in Q1 2026 to 27% in Q2 2026, as TVL climbed from $195M to $247.5M.",
+      "forwardLooking": false,
+      "metrics": [
+        { "label": "Q1 2026 RWA TVL (USD)", "value": 195000000, "provenance": { "kind": "dune", "queryId": 44, "column": "rwa_tvl_usd", "row": 2 } },
+        { "label": "Q2 2026 RWA TVL (USD)", "value": 247500000, "provenance": { "kind": "dune", "queryId": 44, "column": "rwa_tvl_usd", "row": 3 } },
+        { "label": "Q1 2026 QoQ growth (%)", "value": 16, "provenance": { "kind": "dune", "queryId": 44, "column": "qoq_growth_pct", "row": 2 } },
+        { "label": "Q2 2026 QoQ growth (%)", "value": 27, "provenance": { "kind": "dune", "queryId": 44, "column": "qoq_growth_pct", "row": 3 } }
+      ]
+    },
+    {
       "id": "c1",
       "text": "Mantle RWA TVL reached $247.5M as of June 2026, up 27% on the quarter.",
       "forwardLooking": false,
@@ -12,10 +23,11 @@
     },
     {
       "id": "c2",
-      "text": "Tokenized-equity volume on Mantle reached $12M, evidencing real distribution beyond issuance.",
+      "text": "Tokenized-equity volume on Mantle rose from $4.1M in Q1 2026 to $12M in Q2 2026, evidencing real distribution beyond issuance — not just issuance.",
       "forwardLooking": false,
       "metrics": [
-        { "label": "Tokenized-equity volume (USD)", "value": 12000000, "address": "0xAbC0000000000000000000000000000000000002", "provenance": { "kind": "dune", "queryId": 43, "column": "equity_volume_usd", "row": 0 } }
+        { "label": "Q1 2026 tokenized-equity volume (USD)", "value": 4100000, "provenance": { "kind": "dune", "queryId": 45, "column": "equity_volume_usd", "row": 0 } },
+        { "label": "Q2 2026 tokenized-equity volume (USD)", "value": 12000000, "address": "0xAbC0000000000000000000000000000000000002", "provenance": { "kind": "dune", "queryId": 43, "column": "equity_volume_usd", "row": 0 } }
       ]
     },
     {
