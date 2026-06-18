@@ -2,7 +2,7 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-18 — by: Task 17 execution (SKILL.md + README + submission docs complete)
+**Last updated:** 2026-06-18 — by: post-review surgical fixes (entity resolution wiring + chart.js vendoring)
 
 ---
 
@@ -60,6 +60,12 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - 2026-06-17 — Live example reframed to a **claim that must be proven**: "Did Mantle's RWA growth actually accelerate in Q2 2026, and are tokenized-equity adoption claims supported onchain?"
 - 2026-06-17 — Added **cached fixture run** so the demo always renders offline.
 
+## Known minor follow-ups (accepted, non-blocking)
+
+- `evals/` directory is empty — eval harness is roadmap, not blocking submission.
+- `now` parameter in `runResearch` is typed as `string` with a documented `void` note in the plan; left as-is per surgical-change rule.
+- `ERC8004_IDENTITY_REGISTRY` is used only in the live `attest.ts` setup path; fixture path never reaches it.
+
 ## Blockers
 
 - None yet.
@@ -85,3 +91,4 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - 2026-06-17 — Task 15 complete. Created `src/operator.test.ts` (2 tests: gate-pass → pdf+attest called; gate-fail → renderPdf+attest NOT called). Created `src/operator.ts` (runResearch — wires onchain+web scouts → synthesize → confidence scoring → runGate → conditional renderPdf+attest → telemetry). TDD: test failed (module not found), impl written, 2/2 tests pass. Full suite: 32/32 pass. `npx tsc --noEmit` clean. Committed (SHA: f55ed12). Next: Task 16 — CLI + cached fixture run.
 - 2026-06-17 — Task 16 complete. Created `src/cli.ts` (live + fixture branches), `data/allowlist.fixture.json` (2 demo addresses), `fixtures/mantle-rwa-q2-2026.json` (cached scout outputs), `fixtures/report.json` (pre-synthesized report). Appended `VERITY_VALIDATOR_ADDRESS=` to `.env.example`. Added `!examples/mantle-rwa-q2-2026.pdf` gitignore exception. Fixture run (`npx tsx src/cli.ts --fixture`): `"passed": true`, PDF 84,858 bytes, `attestationTx: "simulated-0x1ebb56f76f20"`. `npx tsc --noEmit` clean. Full suite: 32/32 pass. Committed (SHA: b770d79). Next: Task 17 — SKILL.md + README + submission.
 - 2026-06-18 — Task 17 complete. Verified all three documentation files exist with correct content: SKILL.md (frontmatter + overview), posthog/events.md (PostHog event schema), README.md (full pipeline with triple-backtick fences, no placeholder text). Updated handoff.md TL;DR + progress log. All files ready for submission. Committed (SHA: df80311).
+- 2026-06-18 — Post-review fixes complete (SHA: c3441e3). Fix A: wired `resolveTargets` into `src/operator.ts` so only entity-resolved allowlisted addresses are passed to the synthesizer (full allowlist still goes to provenance checker/gate). Added 3rd operator test proving the wiring. Fix B: vendored chart.js UMD bundle (`chart.umd.js`) inline into `src/report/render-html.ts` via `readFileSync` — CDN dependency eliminated, offline render confirmed. chart.js path resolved via filesystem join from `import.meta.url` (package `exports` field blocks deep `require.resolve`). Fixture demo: `"passed": true`, PDF 69,275 bytes. 33/33 tests pass, `npx tsc --noEmit` clean. Accepted follow-ups noted above.
