@@ -2,6 +2,20 @@
   "question": "Did Mantle's RWA growth actually accelerate in Q2 2026, and are tokenized-equity adoption claims supported onchain?",
   "now": "2026-06-17",
   "queryIds": [42, 43, 44, 45],
+  "scrapes": [
+    {
+      "url": "https://defillama.com/chain/Mantle",
+      "domain": "defillama.com",
+      "text": "Mantle RWA Active Mcap is $238,950,000 across tokenized treasuries, equities and credit.",
+      "scrapedAt": "2026-06-17T00:00:00Z"
+    }
+  ],
+  "discovered": {
+    "verified": [],
+    "quarantined": [
+      { "name": "MI4", "issuer": "Securitize", "category": "index-fund", "networks": ["Mantle"] }
+    ]
+  },
   "dune": [
     { "queryId": 42, "rows": [{ "tvl_usd": 247500000 }], "executedAt": "2026-06-16T00:00:00Z" },
     { "queryId": 43, "rows": [{ "period": "Q2-2026", "equity_volume_usd": 12000000 }], "executedAt": "2026-06-16T00:00:00Z" },

@@ -10,6 +10,10 @@ import { hashFile } from "./attest-8004/hash.js";
 import { attest } from "./attest-8004/attest.js";
 import { makeTelemetry, defaultSink } from "./telemetry.js";
 import { runResearch, type ResearchDeps } from "./operator.js";
+import { loadSourceAllowlist } from "./verify/source-allowlist.js";
+import { captureScrapes } from "./scouts/scrape-scout.js";
+import { runRegistryScout, type RawCandidate } from "./discovery/registry-scout.js";
+import { matchOnchain } from "./discovery/match-onchain.js";
 import type { Report } from "./types.js";
 
 const fixtureMode = process.argv.includes("--fixture");
@@ -28,6 +32,7 @@ async function main(): Promise<void> {
   if (fixtureMode) {
     const fx = JSON.parse(readFileSync("fixtures/mantle-rwa-q2-2026.json", "utf8"));
     const allowlist = loadAllowlist("data/allowlist.fixture.json");
+    const sourceAllowlist = loadSourceAllowlist("data/source-allowlist.json");
     const fixtureReport = JSON.parse(readFileSync("fixtures/report.json", "utf8")) as Report;
     // VERITY_FIXTURE_LIVE_LLM=1 exercises the REAL synthesizer + judge (e.g. OpenAI models) over the
     // cached scout data — a cheap way to test the LLM path without Dune/Exa keys. Default is fully
@@ -36,6 +41,8 @@ async function main(): Promise<void> {
     const deps: ResearchDeps = {
       onchain: async () => fx.dune,
       web: async () => fx.web,
+      scrape: async () => fx.scrapes ?? [],
+      discover: async () => fx.discovered ?? { verified: [], quarantined: [] },
       synthesize: liveLlm ? synthesize : async () => structuredClone(fixtureReport),
       judge: liveLlm ? judge : async () => ({ passed: true, notes: "fixture: qualitative review stubbed offline" }),
       renderPdf,
@@ -43,7 +50,7 @@ async function main(): Promise<void> {
       telemetry,
     };
     const out = await runResearch(
-      { question: fx.question, entities: ["SPCXx", "InsightX"], queryIds: fx.queryIds, allowlist, now: fx.now },
+      { question: fx.question, entities: ["USDY", "mUSD"], queryIds: fx.queryIds, allowlist, now: fx.now, sourceAllowlist },
       deps,
     );
     console.log(JSON.stringify(out, null, 2));
@@ -51,6 +58,15 @@ async function main(): Promise<void> {
   }
 
   const allowlist = loadAllowlist("data/allowlist.json");
+  const sourceAllowlist = loadSourceAllowlist("data/source-allowlist.json");
+  const scrapeTargets = (process.env.VERITY_SCRAPE_URLS ?? "")
+    .split(",")
+    .map((u) => u.trim())
+    .filter(Boolean)
+    .map((url) => ({ url, domain: new URL(url).hostname.replace(/^www\./, "") }));
+  const discoveryDomains = sourceAllowlist
+    .filter((s) => s.roles.includes("discovery"))
+    .map((s) => s.domain);
   const question =
     process.argv.slice(2).filter((a) => a !== "--fixture").join(" ") ||
     "Did Mantle's RWA growth accelerate in Q2 2026?";
@@ -58,6 +74,23 @@ async function main(): Promise<void> {
   const deps: ResearchDeps = {
     onchain: (ids) => runOnchainScout(ids, process.env.DUNE_API_KEY!),
     web: (q) => runWebScout(q, process.env.EXA_API_KEY!),
+    scrape: () =>
+      captureScrapes(
+        scrapeTargets,
+        async (url) => {
+          const res = await fetch(url);
+          if (!res.ok) throw new Error(`scrape failed: ${url} ${res.status}`);
+          return res.text();
+        },
+        new Date().toISOString(),
+      ),
+    discover: async () => {
+      // Discovery fetch is registry-specific and not yet automated; return none until a
+      // per-registry parser is added. Quarantine-by-default keeps the Cardinal Rule intact.
+      const fetchCandidates = async (_domain: string): Promise<RawCandidate[]> => [];
+      const candidates = await runRegistryScout(fetchCandidates, discoveryDomains);
+      return matchOnchain(candidates, allowlist, () => null);
+    },
     synthesize,
     judge,
     renderPdf,
@@ -71,7 +104,7 @@ async function main(): Promise<void> {
     telemetry,
   };
   const out = await runResearch(
-    { question, entities: ["USDY", "mUSD"], queryIds, allowlist, now: new Date().toISOString().slice(0, 10) },
+    { question, entities: ["USDY", "mUSD"], queryIds, allowlist, now: new Date().toISOString().slice(0, 10), sourceAllowlist },
     deps,
   );
   console.log(JSON.stringify(out, null, 2));
