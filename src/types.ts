@@ -33,6 +33,14 @@ export interface ScrapeResult {
   scrapedAt: string; // ISO timestamp
 }
 
+/** A candidate RWA asset discovered from a registry, before on-chain matching. */
+export interface RwaCandidate {
+  name: string;
+  issuer: string;
+  category: RwaCategory;
+  networks: string[];
+}
+
 /** A single numeric fact asserted in the report. */
 export interface Metric {
   label: string;
