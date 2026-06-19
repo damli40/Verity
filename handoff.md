@@ -2,7 +2,7 @@
 
 > **Update this file after every meaningful action** (step/task done, blocker hit, decision made, open question resolved). A fresh agent must be able to resume from this file alone. Append to the log; don't silently rewrite history.
 
-**Last updated:** 2026-06-18 — by: PRODUCTION LIVE RUN complete — real Dune query + verified allowlist + REAL on-chain attestation landed on Mantle mainnet
+**Last updated:** 2026-06-19 — by: v2 Plan 2 (discovery + operator/CLI wiring) complete — discovery + scrape capture + two-tier gate now live in operator/CLI; 70/70 tests, offline fixture green. Next = Plan 3 deck engine.
 
 ---
 
@@ -74,6 +74,11 @@ Legend: ☐ not started · ◐ in progress · ☑ done
 - None yet.
 
 ## Progress log (append-only)
+
+- 2026-06-19 — **VERITY v2 PLAN 2 (Discovery + Operator/CLI Wiring) DONE.** Plan: `docs/superpowers/plans/2026-06-19-verity-v2-plan2-discovery-and-wiring.md` (5 TDD tasks, backward-compatible). Built: `src/discovery/registry-scout.ts` (`parseCandidates` Mantle-only normalize + `runRegistryScout` injected fetch; added `RwaCandidate` to types.ts); `src/discovery/match-onchain.ts` (`matchOnchain` → `{verified, quarantined}` via injected `lookup`, verified ONLY when resolved addr matches a `status:"verified"` allowlist entry, never auto-promotes); `src/scouts/scrape-scout.ts` (`captureScrapes` full-page text + scrapedAt for corroboration string-match, distinct from Exa snippet web scout). Wired operator: `ResearchInput` += optional `sourceAllowlist`, `ResearchDeps` += optional `scrape`/`discover`, `ResearchOutput` += `discovered`; scrapes+discovery captured in parallel with dune/web; `runGate` now threaded with `scrapes`+`sourceAllowlist`; after gate passes, `deriveTier` attached to every claim. Wired CLI both paths: loads `data/source-allowlist.json`; fixture serves cached `fx.scrapes`/`fx.discovered` (added to `fixtures/mantle-rwa-q2-2026.json`) + fixed stale `entities` SPCXx/InsightX → USDY/mUSD; live path reads `VERITY_SCRAPE_URLS` (+ documented `VERITY_QUERY_IDS`/`VERITY_SCRAPE_URLS` in `.env.example`), discovery quarantines-by-default (no per-registry parser yet, `lookup`→null). **70/70 tests, tsc clean, offline `--fixture` render green** → `{passed:true, pdfPath, simulated attestation, discovered:{quarantined:[MI4]}}`. v2 path now exercised end-to-end offline. Curated report.json still Dune-backed so gate pass/fail unchanged. Committed (registry-scout, match-onchain, scrape-scout, operator, cli — 5 commits). **Deferred (accepted):** `src/cache/` TTL (freshness already enforced in checker, YAGNI); live discovery per-registry parsers + on-chain resolver; Plan 3 deck engine.
+
+- ⏭️ **NEXT: Plan 3 (deck engine)** — `src/report/theme.ts` (design tokens/CSS), `slides.ts` (`buildDeck(report,meta):Slide[]`, group by category, `Slide` union type), `render-deck.ts` (replaces render-html.ts: cover/TOC/dividers/content slides w/ tier badges Verified=green/Corroborated=amber/Forward-looking=grey + source captions + footer + page#s/sources appendix), `charts.ts` (chart-type by metric shape: time-series→line, categorical→bar, composition→doughnut), landscape `generate-pdf.ts`. `tier`/`category`/`discovered` data is now available to render. Delphi "State of Token Markets" PDF (~/Downloads) = quality bar. Programmatic visuals only (offline + recomputable hash). Plan 3 NOT yet written.
+
 
 - 2026-06-17 — Brainstormed + wrote spec; revised after external review (verification engine first, deterministic spine, allowlist, mainnet attestation, confidence scores, simplified cost). Wrote 17-task implementation plan. Created `verity/`, `CLAUDE.md`, `handoff.md`. No source code yet.
 - 2026-06-17 — Task 0 complete. Scaffold committed (SHA: 321cfd82d622ea5794b1d61b85f5c673296e5824). Dirs: src/ data/ evals/ fixtures/ examples/ posthog/ docs/superpowers/specs|plans/. Files: package.json, tsconfig.json, vitest.config.ts, .gitignore, .env.example, README.md. npm install: 106 packages (7 audit vulnerabilities, non-blocking). npx playwright install chromium: SUCCESS (Chrome 149 + headless shell downloaded). git identity set locally (Dami / demiladeakins@gmail.com).
