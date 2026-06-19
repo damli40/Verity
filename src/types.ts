@@ -1,7 +1,37 @@
-/** Where a number came from. Either a re-runnable Dune query cell or a cited URL. */
+/** Where a number came from. Dune = recomputable; scrape = corroborated; source = context only. */
 export type ProvenanceRef =
   | { kind: "dune"; queryId: number; column: string; row: number }
+  | { kind: "scrape"; domain: string; url: string; scrapedAt: string; scope: "global" | "mantle-specific"; figure: string }
   | { kind: "source"; url: string };
+
+/** RWA asset categories used to group claims and allowlist entries. */
+export type RwaCategory =
+  | "tokenized-treasuries"
+  | "tokenized-equities"
+  | "index-fund"
+  | "private-credit"
+  | "commodities"
+  | "real-estate"
+  | "other";
+
+/** Trust tier a claim earns after the gate runs. */
+export type ClaimTier = "verified" | "corroborated" | "forward-looking";
+
+/** What a web source is trusted to do. */
+export type SourceRole = "discovery" | "corroboration";
+
+export interface SourceAllowlistEntry {
+  domain: string;
+  roles: SourceRole[];
+}
+
+/** A page captured this run; the checker string-matches scrape figures against `text`. */
+export interface ScrapeResult {
+  url: string;
+  domain: string;
+  text: string;
+  scrapedAt: string; // ISO timestamp
+}
 
 /** A single numeric fact asserted in the report. */
 export interface Metric {
@@ -29,6 +59,8 @@ export interface Claim {
   forwardLooking: boolean;
   confidence?: number;     // 0..100, set by the confidence scorer
   signals?: ConfidenceSignals;
+  category?: RwaCategory;  // set by the synthesizer
+  tier?: ClaimTier;        // derived post-gate
 }
 
 export interface Report {
@@ -48,6 +80,8 @@ export interface AllowlistEntry {
   name: string;
   address: string;         // EIP-55 checksummed
   chainId: number;
+  category: RwaCategory;
+  status: "verified" | "quarantined";
   provenance: string;      // human note: where the address was confirmed
 }
 

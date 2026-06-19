@@ -3,12 +3,16 @@
     "name": "USDY",
     "address": "0x5bE26527e817998A7206475496fDE1E68957c5A6",
     "chainId": 5000,
+    "category": "tokenized-treasuries",
+    "status": "verified",
     "provenance": "Ondo U.S. Dollar Yield (tokenized US Treasuries) on Mantle. Confirmed on docs.ondo.finance/addresses (Mantle section) + mantlescan.xyz, 2026-06-18."
   },
   {
     "name": "mUSD",
     "address": "0xab575258d37EaA5C8956EfABe71F4eE8F6397cF3",
     "chainId": 5000,
+    "category": "tokenized-treasuries",
+    "status": "verified",
     "provenance": "Mantle USD (mUSD), the rebasing/distributing form of USDY on Mantle. Confirmed on docs.ondo.finance/addresses + docs.ondo.finance/tools/converter/usdy-musd-conversion, 2026-06-18."
   }
 ]

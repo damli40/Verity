@@ -1,9 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { loadAllowlist, isAllowed } from "./allowlist.js";
+import type { AllowlistEntry } from "./types.js";
 
 describe("allowlist", () => {
-  const list = [
-    { name: "A", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, provenance: "test" },
+  const list: AllowlistEntry[] = [
+    { name: "A", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, category: "tokenized-treasuries", status: "verified", provenance: "test" },
   ];
 
   it("matches addresses case-insensitively", () => {

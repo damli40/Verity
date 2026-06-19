@@ -3,7 +3,7 @@ import { resolveTargets } from "./onchain-finance-scout.js";
 import type { AllowlistEntry } from "../types.js";
 
 const allowlist: AllowlistEntry[] = [
-  { name: "SPCXx", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, provenance: "verified" },
+  { name: "SPCXx", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, category: "tokenized-treasuries", status: "verified", provenance: "verified" },
 ];
 
 describe("resolveTargets", () => {
