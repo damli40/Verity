@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from "vitest";
 import { runResearch } from "./operator.js";
-import type { Report, DuneResultRef, AllowlistEntry } from "./types.js";
+import type { Report, DuneResultRef, AllowlistEntry, ScrapeResult, SourceAllowlistEntry } from "./types.js";
 
 const allowlist: AllowlistEntry[] = [
   { name: "X", address: "0xAbC0000000000000000000000000000000000001", chainId: 5000, category: "tokenized-treasuries", status: "verified", provenance: "t" },
@@ -63,5 +63,58 @@ describe("runResearch", () => {
     expect(out.passed).toBe(false);
     expect(badDeps.renderPdf).not.toHaveBeenCalled();
     expect(badDeps.attest).not.toHaveBeenCalled();
+  });
+});
+
+describe("runResearch — v2 wiring", () => {
+  it("passes a corroborated scrape claim and tags its tier 'corroborated'", async () => {
+    const scrapes: ScrapeResult[] = [
+      { url: "https://defillama.com/chain/Mantle", domain: "defillama.com",
+        text: "Mantle RWA total value is $241,080,948.", scrapedAt: "2026-06-19T00:00:00Z" },
+    ];
+    const sourceAllowlist: SourceAllowlistEntry[] = [{ domain: "defillama.com", roles: ["corroboration"] }];
+    const scrapeReport: Report = {
+      question: "q", asOf: "2026-06-19",
+      claims: [{ id: "s1", text: "Mantle RWA total is $241,080,948", forwardLooking: false,
+        metrics: [{ label: "Mantle RWA total", value: 241_080_948,
+          provenance: { kind: "scrape", domain: "defillama.com", url: "https://defillama.com/chain/Mantle",
+            scrapedAt: "2026-06-19T00:00:00Z", scope: "mantle-specific", figure: "$241,080,948" } }] }],
+    };
+    let renderedReport: Report | undefined;
+    const out = await runResearch(
+      { question: "q", entities: [], queryIds: [], allowlist: [], now: "2026-06-19", sourceAllowlist },
+      {
+        onchain: async () => [],
+        web: async () => [],
+        scrape: async () => scrapes,
+        synthesize: async () => structuredClone(scrapeReport),
+        judge: async () => ({ passed: true, notes: "ok" }),
+        renderPdf: async (r: Report) => { renderedReport = r; return "out.pdf"; },
+        attest: async () => "0xtx",
+        telemetry: { runCompleted: () => {}, flush: () => {} },
+      } as any,
+    );
+    expect(out.passed).toBe(true);
+    expect(renderedReport?.claims[0].tier).toBe("corroborated");
+  });
+
+  it("runs discovery and returns the DiscoveryResult", async () => {
+    const discovered = { verified: [], quarantined: [{ name: "Ghost", issuer: "", category: "other" as const, networks: ["Mantle"] }] };
+    const out = await runResearch(
+      { question: "q", entities: [], queryIds: [], allowlist: [], now: "2026-06-19" },
+      {
+        onchain: async () => [],
+        web: async () => [],
+        discover: async () => discovered,
+        synthesize: async () => ({ question: "q", asOf: "2026-06-19",
+          claims: [{ id: "f1", text: "Ghost may grow", forwardLooking: true, metrics: [] }] }),
+        judge: async () => ({ passed: true, notes: "ok" }),
+        renderPdf: async () => "out.pdf",
+        attest: async () => "0xtx",
+        telemetry: { runCompleted: () => {}, flush: () => {} },
+      } as any,
+    );
+    expect(out.passed).toBe(true);
+    expect(out.discovered).toEqual(discovered);
   });
 });
