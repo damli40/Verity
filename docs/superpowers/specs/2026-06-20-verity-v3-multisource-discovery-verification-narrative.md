@@ -56,6 +56,7 @@ does from what the autonomous pipeline reproduces via REST clients.
 | 3 | Dune-native charts in the report | **Bake static image bytes.** Dune MCP authors the visualization → render to static PNG/SVG → embed inline. Self-contained, offline, hash-stable. Appendix links the live Dune query for re-running. |
 | 4 | Report subject | The Mantle RWA-growth question, **broadened to the full auto-verified discovered RWA set** (not just USDY/mUSD). USDY/mUSD remain the deepest-data anchor cases; quarantined assets are named but never numerically cited. |
 | 5 | Discovery promotion trust posture | **Auto-verify on issuer-source ∩ on-chain agreement.** A discovered asset auto-promotes to verified when its address is confirmed by the issuer's own official source (allowlisted domain) AND matches a real on-chain ERC-20. Unknown issuers with no official-source confirmation stay quarantined for human review. |
+| 6 | On-chain provider fallback | **Etherscan/Mantlescan as the fallback when Nansen lacks coverage.** Etherscan-family API for Mantle (Mantlescan, or Etherscan V2 multichain with `chainid=5000`) supplies token supply + contract confirmation for free, keeping cross-verification two-sourced (Dune + Etherscan) when Nansen does not index a token. Holder count/list is an Etherscan Pro (paid) endpoint, so Etherscan backstops supply + confirmation but does not replace Nansen's holder-concentration / smart-money dimensions. |
 
 ## Architecture
 
@@ -81,8 +82,9 @@ address:
 **Stage 2 — Resolve to a *trusted* address (`lookup`).** The Cardinal-Rule-critical step. A candidate
 name resolves to a contract address only via the **issuer's own official source** (a domain carrying the
 new `issuer-official` role in `source-allowlist.json`, e.g. `docs.ondo.finance/addresses`), then confirmed
-on-chain through Dune (real ERC-20; sane name/symbol/supply) and optionally Nansen `token_info`. A
-registry's `claimedAddress` is believed only if it equals the issuer-official address.
+on-chain through Dune (real ERC-20; sane name/symbol/supply), with **Nansen `token_info` or, when Nansen
+lacks coverage, Etherscan/Mantlescan** as the independent confirmation. A registry's `claimedAddress` is
+believed only if it equals the issuer-official address.
 
 **Stage 3 — Verify-or-quarantine (`matchOnchain`, largely unchanged).** Resolved address confirmed by an
 issuer-official source AND present on-chain → **verified** (gets numeric claims + Dune/Nansen tracking).
@@ -101,14 +103,20 @@ gated on issuer-source agreement, not a bare registry claim.
 - **`ProvenanceRef`** generalizes from Dune-only to a discriminated union:
   - `{ kind: "dune", queryId, column, row }` (existing)
   - `{ kind: "nansen", endpoint, field, address, chain }` (new)
+  - `{ kind: "etherscan", endpoint, field, address, chain }` (new — fallback on-chain provider)
 - **`src/scouts/nansen-scout.ts`** — injected REST client returning a structured `NansenResultRef[]`
   (holders, concentration, segment flows, token info), analogous to the Dune scout. External I/O injected
   for unit-testability per §6.
-- **`src/verify/nansen-checker.ts`** — re-validates a `kind:"nansen"` metric against the live Nansen
-  response, mirroring `provenance-checker.ts`. Fails closed on a missing/mismatched field.
+- **`src/scouts/etherscan-scout.ts`** — injected Etherscan/Mantlescan REST client (Etherscan V2,
+  `chainid=5000`) returning token supply + contract-confirmation fields. Used as the second on-chain source
+  for cross-verification **when Nansen does not index a token**; supply + confirmation are free-tier,
+  holder count is best-effort (Pro endpoint).
+- **`src/verify/onchain-checker.ts`** — re-validates a `kind:"nansen"` or `kind:"etherscan"` metric against
+  the live provider response, mirroring `provenance-checker.ts`. Fails closed on a missing/mismatched field.
 - **`src/verify/cross-check.ts`** — pairs metrics asserting the same quantity across providers; stamps the
-  top **Cross-verified** tier only when both agree within a declared tolerance (e.g. ±1%, stated in the
-  report); emits an explicit `disagreement` flag otherwise. Never averages.
+  top **Cross-verified** tier only when two independent on-chain sources (Dune + Nansen, or Dune + Etherscan
+  when Nansen is absent) agree within a declared tolerance (e.g. ±1%, stated in the report); emits an
+  explicit `disagreement` flag otherwise. Never averages.
 - **Tier order becomes:** Cross-verified ▸ Verified ▸ Corroborated ▸ Forward-looking. `deriveTier` and the
   tier badges/theme extend to the new top tier.
 - **`runGate`** threads the Nansen scout result + cross-check alongside the existing Dune checker. A
@@ -141,10 +149,10 @@ gated on issuer-source agreement, not a bare registry claim.
 question
   ├─ discovery: fetchCandidates (Firecrawl + Dune MCP + Dune deployer query + Nansen screener + Exa)
   │     → lookup (issuer-official source ∩ on-chain confirm) → matchOnchain → {verified[], quarantined[]}
-  ├─ scouts: Dune (supply/volume) ‖ Nansen (holders/concentration/flows) ‖ web (Exa) ‖ scrape (corroboration)
-  ├─ synthesize: provenance-tagged claims (dune|nansen), categories, prose layer  → SynthesisResult
+  ├─ scouts: Dune (supply/volume) ‖ Nansen (holders/concentration/flows) [‖ Etherscan supply when Nansen absent] ‖ web (Exa) ‖ scrape (corroboration)
+  ├─ synthesize: provenance-tagged claims (dune|nansen|etherscan), categories, prose layer  → SynthesisResult
   ├─ verify gate:
-  │     provenance-checker (dune cells)  ‖  nansen-checker (nansen fields)  → cross-check (agreement → tier/flag)
+  │     provenance-checker (dune cells)  ‖  onchain-checker (nansen|etherscan fields)  → cross-check (agreement → tier/flag)
   │     → LLM judge (qualitative only)
   ├─ confidence: deriveSignals (multi-provider quality/agreement/freshness) → score
   ├─ render ONCE: landscape deck (sections by category, tier badges incl. Cross-verified, baked charts,
@@ -155,8 +163,10 @@ question
 ## Error Handling & Cardinal-Rule Guarantees
 
 - **Nansen coverage is not assumed.** The first implementation task probes Nansen for USDY/mUSD on Mantle;
-  if a token is not indexed, it falls back to single-source Verified (Dune) and the report says so —
-  Nansen absence never silently drops a claim or fabricates a figure.
+  if a token is not indexed, the cross-verification second source falls back to **Etherscan/Mantlescan**
+  (supply + contract confirmation), keeping the figure two-sourced (Dune + Etherscan = Cross-verified). If
+  neither Nansen nor Etherscan covers it, the figure falls back to single-source Verified (Dune) and the
+  report says so — provider absence never silently drops a claim or fabricates a figure.
 - **Fail-closed everywhere:** a metric with missing/invalid provenance (dune or nansen) fails the gate, as
   today. Cross-check disagreement does not silently pick a winner — it downgrades the tier and flags it.
 - **No invented addresses:** discovery promotes only on issuer-official ∩ on-chain agreement; everything
@@ -168,9 +178,10 @@ question
 - TDD per §6: failing test → fail → minimal impl → pass → commit. External I/O injected.
 - New unit tests: `parseCandidates` with `claimedAddress`/`sourceUrl`; `lookup` resolution (issuer match,
   registry-claim-vs-official mismatch rejected, unknown issuer → null); `matchOnchain` auto-promote only on
-  issuer-source agreement; `nansen-scout` shaper; `nansen-checker` (pass, fail on mismatch, fail-closed on
-  missing field); `cross-check` (agreement → Cross-verified, disagreement → flag, single-source → Verified);
-  `deriveTier`/theme for the new tier; synthesizer category emission.
+  issuer-source agreement; `nansen-scout` + `etherscan-scout` shapers; `onchain-checker` (pass, fail on
+  mismatch, fail-closed on missing field, for both nansen + etherscan kinds); `cross-check` (Dune+Nansen
+  agreement → Cross-verified, Dune+Etherscan fallback → Cross-verified, disagreement → flag, single-source
+  → Verified); `deriveTier`/theme for the new tier; synthesizer category emission.
 - Backward compatibility: the offline `--fixture` path must stay green and continue to render an attested
   deck with zero API keys. Fixtures extended with Nansen cells + a discovered/quarantined example.
 
@@ -179,9 +190,10 @@ question
 - **Plan 1 — Discovery funnel.** Types delta; `issuer-official` role; real `fetchCandidates` (Firecrawl +
   Dune harvest + deployer enumeration + Nansen screener + Exa) and `lookup` resolver; `matchOnchain`
   auto-promote on issuer-source agreement; CLI wiring; tests.
-- **Plan 2 — Multi-provider verification + cross-check.** `ProvenanceRef` union; `nansen-scout`;
-  `nansen-checker`; `cross-check`; Cross-verified tier through `deriveTier`/theme/gate; confidence signals
-  across providers; tests.
+- **Plan 2 — Multi-provider verification + cross-check.** `ProvenanceRef` union (dune|nansen|etherscan);
+  `nansen-scout` + `etherscan-scout` (fallback); `onchain-checker`; `cross-check` with Etherscan fallback
+  when Nansen is absent; Cross-verified tier through `deriveTier`/theme/gate; confidence signals across
+  providers; tests.
 - **Plan 3 — Narrative + Dune charts + flagship run.** Synthesizer multi-source prompt + categories +
   prose layer; judge qualitative scoring of prose; baked Dune-native charts (flagship) + pipeline SVG hook;
   full flagship live run over the discovered Mantle RWA set + re-attestation.
