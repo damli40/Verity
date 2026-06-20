@@ -22,8 +22,10 @@ describe("renderDeck", () => {
     expect(html).toContain("Verity · Mantle RWA");      // footer brand
     expect(html).toContain("Verified");                 // tier badge label
     expect(html).toContain("0xabc");                    // attestation in appendix
-    expect(html).toContain("new Chart(");               // chart panel
+    expect(html).toContain("<svg");                     // inline SVG chart panel
+    expect(html).toContain("<polyline");                // line chart for the temporal metrics
     expect(html).not.toContain("cdn.jsdelivr.net");     // no CDN
-    expect(html).not.toContain("http://");              // no external http assets
+    expect(html).not.toContain("<script");              // no JS — fully static, offline, hash-stable
+    expect(html).not.toMatch(/src\s*=/);                // no externally-loaded assets
   });
 });

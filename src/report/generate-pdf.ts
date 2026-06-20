@@ -7,8 +7,9 @@ export async function htmlToPdf(html: string, outPath: string): Promise<void> {
   try {
     const page = await browser.newPage();
     await page.setContent(html, { waitUntil: "networkidle" });
-    await page.waitForTimeout(600); // let the chart paint
-    const pdf = await page.pdf({ format: "A4", printBackground: true, margin: { top: "16mm", bottom: "16mm" } });
+    // Charts are inline SVG (vector) — no canvas paint to wait for, and they rasterize
+    // reliably into the PDF (unlike <canvas>, which Chromium's print backend drops).
+    const pdf = await page.pdf({ printBackground: true, preferCSSPageSize: true, landscape: true });
     writeFileSync(outPath, pdf);
   } finally {
     await browser.close();

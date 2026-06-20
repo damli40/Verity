@@ -1,16 +1,9 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { join, dirname } from "node:path";
-import type { Report, Slide, ChartSpec, RwaCategory } from "../types.js";
+import type { Report, Slide, RwaCategory } from "../types.js";
 import { themeCss, TIER_LABELS } from "./theme.js";
 import { buildDeck, type DeckMeta } from "./slides.js";
+import { renderChartSvg } from "./chart-svg.js";
 
 export type ReportMeta = DeckMeta;
-
-const CHART_JS = readFileSync(
-  join(dirname(fileURLToPath(import.meta.url)), "../../node_modules/chart.js/dist/chart.umd.js"),
-  "utf8",
-);
 
 function escapeHtml(s: string | undefined | null): string {
   return (s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]!));
@@ -24,14 +17,7 @@ function footer(page: number, total: number): string {
   return `<div class="footer"><span>Verity · Mantle RWA</span><span>${page} / ${total}</span></div>`;
 }
 
-function chartScript(id: string, chart: ChartSpec): string {
-  return `<script>new Chart(document.getElementById('${id}'),{type:'${chart.type}',` +
-    `data:{labels:${JSON.stringify(chart.labels)},datasets:[{label:'',data:${JSON.stringify(chart.values)},` +
-    `backgroundColor:['#1f6f8b','#123a63','#b8860b','#1a7f4b','#6b7280'],borderColor:'#123a63',fill:false}]},` +
-    `options:{animation:false,plugins:{legend:{display:${chart.type === "doughnut"}}}}});</script>`;
-}
-
-function renderSlide(slide: Slide, page: number, total: number, charts: string[]): string {
+function renderSlide(slide: Slide, page: number, total: number): string {
   switch (slide.kind) {
     case "cover":
       return `<section class="slide cover"><div class="kicker">Verity · Verification-first RWA research</div>` +
@@ -46,16 +32,12 @@ function renderSlide(slide: Slide, page: number, total: number, charts: string[]
       return `<section class="slide divider"><div class="numeral">${slide.numeral}</div>` +
         `<h2>${escapeHtml(titleCase(slide.category))}</h2>${footer(page, total)}</section>`;
     case "content": {
-      let panel = "";
-      if (slide.chart) {
-        const id = `chart${page}`;
-        panel = `<div class="panel"><canvas id="${id}"></canvas></div>`;
-        charts.push(chartScript(id, slide.chart));
-      }
+      const panel = slide.chart ? `<div class="col-chart">${renderChartSvg(slide.chart)}</div>` : "";
       const callout = slide.callout ? `<div class="callout">${escapeHtml(slide.callout)}</div>` : "";
       return `<section class="slide content"><span class="badge ${slide.tier}">${escapeHtml(TIER_LABELS[slide.tier])}</span>` +
-        `<h1>${escapeHtml(slide.headline)}</h1>${panel}<div class="body">${escapeHtml(slide.body)}</div>${callout}` +
-        `<div class="caption">${escapeHtml(slide.sourceCaption)}</div>${footer(page, total)}</section>`;
+        `<div class="content-row"><div class="col-text"><h1>${escapeHtml(slide.headline)}</h1>` +
+        `<div class="body">${escapeHtml(slide.body)}</div>${callout}` +
+        `<div class="caption">${escapeHtml(slide.sourceCaption)}</div></div>${panel}</div>${footer(page, total)}</section>`;
     }
     case "appendix": {
       const items = slide.sources
@@ -69,14 +51,13 @@ function renderSlide(slide: Slide, page: number, total: number, charts: string[]
 /** Render the full landscape deck to self-contained HTML (Chart.js + theme inlined, no CDN). */
 export function renderDeck(report: Report, meta: ReportMeta): string {
   const slides = buildDeck(report, meta);
-  const total = slides.length;
-  const charts: string[] = [];
-  const body = slides.map((s, i) => renderSlide(s, i + 1, total, charts)).join("");
+  const total = slides.length + 1; // +1 for the appended attestation slide
+  const body = slides.map((s, i) => renderSlide(s, i + 1, total)).join("");
   const attestation =
     `<section class="slide appendix"><h2>Attestation & Cost</h2><ul>` +
     `<li><b>ERC-8004 (Mantle)</b> — tx ${escapeHtml(meta.attestationTx)}</li>` +
     `<li><b>Compute</b> — est $${meta.cost.estimateUsd.toFixed(2)} · actual $${meta.cost.actualUsd.toFixed(2)} · ~${meta.cost.timeSavedHours}h saved vs manual</li>` +
-    `</ul>${footer(total + 1, total + 1)}</section>`;
+    `</ul>${footer(total, total)}</section>`;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Verity — ${escapeHtml(report.question)}</title>` +
-    `<script>${CHART_JS}</script><style>${themeCss()}</style></head><body>${body}${attestation}${charts.join("")}</body></html>`;
+    `<style>${themeCss()}</style></head><body>${body}${attestation}</body></html>`;
 }

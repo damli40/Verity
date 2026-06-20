@@ -29,10 +29,14 @@ export function themeCss(): string {
  .divider { background: linear-gradient(135deg, #11253f 0%, #1f6f8b 100%); color: #f5f8fc; display: flex; flex-direction: column; justify-content: center; }
  .divider .numeral { font-size: 56px; opacity: 0.6; }
  .divider h2 { font-size: 34px; margin: 6px 0 0; }
- .content h1 { font-size: 26px; line-height: 1.2; margin: 0 0 10px; max-width: 70%; }
- .content .body { font-size: 15px; line-height: 1.55; max-width: 60%; color: #2a313c; }
- .panel { position: absolute; right: 26mm; top: 30mm; width: 105mm; }
- .panel canvas { max-width: 105mm; }
+ .content { display: flex; flex-direction: column; }
+ .content .badge { align-self: flex-start; }
+ .content-row { display: flex; gap: 14mm; align-items: flex-start; margin-top: 8px; }
+ .col-text { width: 130mm; }
+ .col-chart { width: 95mm; }
+ .col-chart canvas, .col-chart img { width: 100%; height: auto; }
+ .content h1 { font-size: 26px; line-height: 1.2; margin: 0 0 10px; }
+ .content .body { font-size: 15px; line-height: 1.55; color: #2a313c; }
  .callout { margin-top: 18px; font-family: Georgia, serif; font-size: 20px; color: #123a63; }
  .badge { display: inline-block; padding: 3px 10px; border-radius: 999px; color: #fff; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
  .badge.verified { background: ${TIER_COLORS.verified}; }

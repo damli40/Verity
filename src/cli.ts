@@ -4,7 +4,7 @@ import { runOnchainScout } from "./scouts/onchain-finance-scout.js";
 import { runWebScout } from "./scouts/web-scout.js";
 import { synthesize } from "./synthesizer.js";
 import { judge } from "./verify/llm-judge.js";
-import { renderReportHtml, type ReportMeta } from "./report/render-html.js";
+import { renderDeck, type ReportMeta } from "./report/render-deck.js";
 import { htmlToPdf } from "./report/generate-pdf.js";
 import { hashFile } from "./attest-8004/hash.js";
 import { attest } from "./attest-8004/attest.js";
@@ -24,7 +24,7 @@ const outPdf = "examples/mantle-rwa-q2-2026.pdf";
 const reportUri = process.env.VERITY_REPORT_URI ?? `https://raw.githubusercontent.com/damli40/Verity/main/${outPdf}`;
 
 async function renderPdf(report: Report, meta: ReportMeta): Promise<string> {
-  await htmlToPdf(renderReportHtml(report, meta), outPdf);
+  await htmlToPdf(renderDeck(report, meta), outPdf);
   return outPdf;
 }
 
