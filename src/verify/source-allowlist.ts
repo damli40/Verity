@@ -10,3 +10,27 @@ export function hasRole(domain: string, role: SourceRole, list: SourceAllowlistE
   const d = domain.toLowerCase();
   return list.some((e) => e.domain.toLowerCase() === d && e.roles.includes(role));
 }
+
+/** The issuer-official domain registered for `issuer`, or null. Match is case-insensitive on issuer name. */
+export function issuerOfficialDomain(issuer: string, list: SourceAllowlistEntry[]): string | null {
+  const i = issuer.trim().toLowerCase();
+  if (!i) return null;
+  const hit = list.find(
+    (e) => e.roles.includes("issuer-official") && (e.issuer ?? "").toLowerCase() === i,
+  );
+  return hit ? hit.domain : null;
+}
+
+/**
+ * The URL to confirm an issuer's contract addresses: the entry's `addressesUrl` if set, else the bare
+ * `https://{domain}`. Null when the issuer has no issuer-official entry. Match is case-insensitive.
+ */
+export function issuerOfficialUrl(issuer: string, list: SourceAllowlistEntry[]): string | null {
+  const i = issuer.trim().toLowerCase();
+  if (!i) return null;
+  const hit = list.find(
+    (e) => e.roles.includes("issuer-official") && (e.issuer ?? "").toLowerCase() === i,
+  );
+  if (!hit) return null;
+  return hit.addressesUrl ?? `https://${hit.domain}`;
+}

@@ -14,6 +14,8 @@ import { loadSourceAllowlist } from "./verify/source-allowlist.js";
 import { captureScrapes } from "./scouts/scrape-scout.js";
 import { runRegistryScout, type RawCandidate } from "./discovery/registry-scout.js";
 import { matchOnchain } from "./discovery/match-onchain.js";
+import { makeLookup } from "./discovery/resolve-address.js";
+import { toRawCandidate } from "./discovery/sources.js";
 import type { Report } from "./types.js";
 
 const fixtureMode = process.argv.includes("--fixture");
@@ -26,6 +28,67 @@ const reportUri = process.env.VERITY_REPORT_URI ?? `https://raw.githubuserconten
 async function renderPdf(report: Report, meta: ReportMeta): Promise<string> {
   await htmlToPdf(renderDeck(report, meta), outPdf);
   return outPdf;
+}
+
+/** Extract candidate RWA rows from a registry page via Firecrawl. Returns [] when no key is configured. */
+async function extractRwaRows(url: string): Promise<Record<string, unknown>[]> {
+  const key = process.env.FIRECRAWL_API_KEY;
+  if (!key) return [];
+  const res = await fetch("https://api.firecrawl.dev/v1/extract", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+    body: JSON.stringify({
+      urls: [url],
+      prompt:
+        "Extract every tokenized real-world-asset (RWA) listed on this page that is deployed on the Mantle network. " +
+        "For each, return name, issuer, category, networks (array), and the Mantle contract address.",
+      schema: {
+        type: "object",
+        properties: {
+          rwas: {
+            type: "array",
+            items: {
+              type: "object",
+              properties: {
+                name: { type: "string" }, issuer: { type: "string" }, category: { type: "string" },
+                networks: { type: "array", items: { type: "string" } }, address: { type: "string" },
+              },
+            },
+          },
+        },
+      },
+    }),
+  });
+  if (!res.ok) return [];
+  const json = (await res.json()) as { data?: { rwas?: Record<string, unknown>[] } };
+  return json.data?.rwas ?? [];
+}
+
+/** Fetch a page's rendered text via Firecrawl scrape (JS-capable). Returns "" when no key is configured. */
+async function scrapeText(url: string): Promise<string> {
+  const key = process.env.FIRECRAWL_API_KEY;
+  if (!key) return "";
+  const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+    body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: false, waitFor: 3500 }),
+  });
+  if (!res.ok) return "";
+  const json = (await res.json()) as { data?: { markdown?: string } };
+  return json.data?.markdown ?? "";
+}
+
+/** Confirm an address is a deployed contract on Mantle via Etherscan V2 multichain (free eth_getCode). */
+async function confirmErc20OnMantle(address: string): Promise<boolean> {
+  const key = process.env.ETHERSCAN_API_KEY;
+  if (!key) return false;
+  const u =
+    `https://api.etherscan.io/v2/api?chainid=5000&module=proxy&action=eth_getCode` +
+    `&address=${address}&tag=latest&apikey=${key}`;
+  const res = await fetch(u);
+  if (!res.ok) return false;
+  const json = (await res.json()) as { result?: string };
+  return typeof json.result === "string" && json.result !== "0x";
 }
 
 async function main(): Promise<void> {
@@ -67,9 +130,6 @@ async function main(): Promise<void> {
     .map((u) => u.trim())
     .filter(Boolean)
     .map((url) => ({ url, domain: new URL(url).hostname.replace(/^www\./, "") }));
-  const discoveryDomains = sourceAllowlist
-    .filter((s) => s.roles.includes("discovery"))
-    .map((s) => s.domain);
   const question =
     process.argv.slice(2).filter((a) => a !== "--fixture").join(" ") ||
     "Did Mantle's RWA growth accelerate in Q2 2026?";
@@ -88,11 +148,25 @@ async function main(): Promise<void> {
         new Date().toISOString(),
       ),
     discover: async () => {
-      // Discovery fetch is registry-specific and not yet automated; return none until a
-      // per-registry parser is added. Quarantine-by-default keeps the Cardinal Rule intact.
-      const fetchCandidates = async (_domain: string): Promise<RawCandidate[]> => [];
-      const candidates = await runRegistryScout(fetchCandidates, discoveryDomains);
-      return matchOnchain(candidates, allowlist, () => null);
+      const discoveryDomainsList = sourceAllowlist
+        .filter((s) => s.roles.includes("discovery"))
+        .map((s) => s.domain);
+
+      // Cast the net: extract candidate RWA rows from each discovery registry (Firecrawl), map to RawCandidate.
+      const fetchCandidates = async (domain: string): Promise<RawCandidate[]> => {
+        const url = `https://${domain}`;
+        const rows = await extractRwaRows(url);
+        return rows.map((r) => toRawCandidate(r, url));
+      };
+      const candidates = await runRegistryScout(fetchCandidates, discoveryDomainsList);
+
+      // Resolve each candidate via issuer-official source + on-chain (Etherscan V2, chainid 5000) confirmation.
+      const lookup = makeLookup({
+        list: sourceAllowlist,
+        fetchText: scrapeText,
+        confirmOnchain: confirmErc20OnMantle,
+      });
+      return matchOnchain(candidates, allowlist, lookup);
     },
     synthesize,
     judge,

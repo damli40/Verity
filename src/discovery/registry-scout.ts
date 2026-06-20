@@ -6,6 +6,8 @@ export interface RawCandidate {
   issuer?: string;
   category?: string;
   networks?: string[];
+  claimedAddress?: string;
+  sourceUrl?: string;
 }
 
 const CATEGORIES: RwaCategory[] = [
@@ -44,6 +46,8 @@ export function parseCandidates(raw: RawCandidate[]): RwaCandidate[] {
       issuer: r.issuer ?? "",
       category: coerceCategory(r.category),
       networks: r.networks ?? [],
+      claimedAddress: r.claimedAddress,
+      sourceUrl: r.sourceUrl,
     });
   }
   return out;

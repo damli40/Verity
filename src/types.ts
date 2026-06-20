@@ -18,11 +18,15 @@ export type RwaCategory =
 export type ClaimTier = "verified" | "corroborated" | "forward-looking";
 
 /** What a web source is trusted to do. */
-export type SourceRole = "discovery" | "corroboration";
+export type SourceRole = "discovery" | "corroboration" | "issuer-official";
 
 export interface SourceAllowlistEntry {
   domain: string;
   roles: SourceRole[];
+  /** The RWA issuer this domain officially belongs to (set on issuer-official entries). */
+  issuer?: string;
+  /** Full URL of the issuer's contract-addresses page; used to confirm addresses (issuer-official entries). */
+  addressesUrl?: string;
 }
 
 /** A page captured this run; the checker string-matches scrape figures against `text`. */
@@ -39,6 +43,10 @@ export interface RwaCandidate {
   issuer: string;
   category: RwaCategory;
   networks: string[];
+  /** Contract address as claimed by the discovery registry (UNVERIFIED until issuer-confirmed). */
+  claimedAddress?: string;
+  /** The registry page this candidate was discovered on. */
+  sourceUrl?: string;
 }
 
 /** A single numeric fact asserted in the report. */
