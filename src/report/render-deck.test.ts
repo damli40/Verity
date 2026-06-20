@@ -1,0 +1,29 @@
+import { describe, it, expect } from "vitest";
+import { renderDeck } from "./render-deck.js";
+import type { Report } from "../types.js";
+
+const report: Report = {
+  question: "Did Mantle RWA growth accelerate in Q2 2026?",
+  asOf: "2026-06-17",
+  claims: [
+    { id: "c1", text: "RWA TVL reached $247.5M (+27%).", forwardLooking: false, tier: "verified",
+      category: "tokenized-treasuries",
+      metrics: [{ label: "Q1 2026 TVL", value: 195_000_000, provenance: { kind: "dune", queryId: 42, column: "tvl", row: 0 } },
+                { label: "Q2 2026 TVL", value: 247_500_000, provenance: { kind: "dune", queryId: 42, column: "tvl", row: 1 } }] },
+  ],
+};
+
+describe("renderDeck", () => {
+  it("renders a self-contained landscape deck with badges, captions, footer, and charts", () => {
+    const html = renderDeck(report, { attestationTx: "0xabc", cost: { estimateUsd: 0.2, actualUsd: 0.18, timeSavedHours: 4 } });
+    expect(html).toContain("Did Mantle RWA growth accelerate in Q2 2026?");
+    expect(html).toContain("RWA TVL reached $247.5M");
+    expect(html).toContain("Dune #42");                 // source caption
+    expect(html).toContain("Verity · Mantle RWA");      // footer brand
+    expect(html).toContain("Verified");                 // tier badge label
+    expect(html).toContain("0xabc");                    // attestation in appendix
+    expect(html).toContain("new Chart(");               // chart panel
+    expect(html).not.toContain("cdn.jsdelivr.net");     // no CDN
+    expect(html).not.toContain("http://");              // no external http assets
+  });
+});
