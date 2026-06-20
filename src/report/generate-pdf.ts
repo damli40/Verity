@@ -1,7 +1,7 @@
 import { chromium } from "playwright";
 import { writeFileSync } from "node:fs";
 
-/** Renders HTML to PDF via headless Chromium, waiting for Chart.js to draw. */
+/** Renders HTML to a landscape PDF via headless Chromium. Charts are inline SVG (no canvas/JS to await). */
 export async function htmlToPdf(html: string, outPath: string): Promise<void> {
   const browser = await chromium.launch();
   try {

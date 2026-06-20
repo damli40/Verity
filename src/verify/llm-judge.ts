@@ -4,6 +4,8 @@ import { complete } from "../llm.js";
 export interface JudgeVerdict {
   passed: boolean;
   notes: string;
+  /** Tokens billed by the judge model, surfaced for real cost reporting. */
+  tokens?: number;
 }
 
 export function buildJudgePrompt(report: Report): string {
@@ -33,6 +35,6 @@ export function parseJudgeVerdict(text: string): JudgeVerdict {
 export async function judge(report: Report): Promise<JudgeVerdict> {
   const model = process.env.VERITY_JUDGE_MODEL ?? "claude-haiku-4-5-20251001";
   // 4096 leaves room for reasoning models (o-series / gpt-5) that spend tokens before emitting content.
-  const text = await complete({ model, prompt: buildJudgePrompt(report), maxTokens: 4096 });
-  return parseJudgeVerdict(text);
+  const { text, tokens } = await complete({ model, prompt: buildJudgePrompt(report), maxTokens: 4096 });
+  return { ...parseJudgeVerdict(text), tokens };
 }

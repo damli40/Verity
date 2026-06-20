@@ -53,9 +53,14 @@ export function renderDeck(report: Report, meta: ReportMeta): string {
   const slides = buildDeck(report, meta);
   const total = slides.length + 1; // +1 for the appended attestation slide
   const body = slides.map((s, i) => renderSlide(s, i + 1, total)).join("");
+  const a = meta.anchor;
+  const anchorLine = a
+    ? `<li><b>ERC-8004 (${escapeHtml(a.chain)})</b> — agentId ${escapeHtml(a.agentId)} · ValidationRegistry ${escapeHtml(a.registry)}</li>`
+    : "";
   const attestation =
     `<section class="slide appendix"><h2>Attestation & Cost</h2><ul>` +
-    `<li><b>ERC-8004 (Mantle)</b> — tx ${escapeHtml(meta.attestationTx)}</li>` +
+    `<li><b>Verify</b> — keccak256 of this PDF is the on-chain <i>requestHash</i>; recompute it and match the ValidationRegistry record. Trust comes from the re-runnable Dune queries + this hash, not from the tx.</li>` +
+    anchorLine +
     `<li><b>Compute</b> — est $${meta.cost.estimateUsd.toFixed(2)} · actual $${meta.cost.actualUsd.toFixed(2)} · ~${meta.cost.timeSavedHours}h saved vs manual</li>` +
     `</ul>${footer(total, total)}</section>`;
   return `<!doctype html><html><head><meta charset="utf-8"><title>Verity — ${escapeHtml(report.question)}</title>` +

@@ -105,7 +105,6 @@ function doughnutChart(c: ChartSpec): string {
     const large = frac > 0.5 ? 1 : 0;
     const p = (rad: number, a: number) => `${(cx + rad * Math.cos(a)).toFixed(1)} ${(cy + rad * Math.sin(a)).toFixed(1)}`;
     segs += `<path d="M ${p(r, a0)} A ${r} ${r} 0 ${large} 1 ${p(r, a1)} L ${p(inner, a1)} A ${inner} ${inner} 0 ${large} 0 ${p(inner, a0)} Z" fill="${PALETTE[i % PALETTE.length]}"/>`;
-    legend += `<rect x="${ML + PW + 4}" y="0" width="0" height="0" fill="none"/>`;
     const ly = MT + 14 + i * 16;
     legend += `<rect x="${(cx + r + 10).toFixed(1)}" y="${ly - 9}" width="10" height="10" fill="${PALETTE[i % PALETTE.length]}"/>` +
       `<text x="${(cx + r + 24).toFixed(1)}" y="${ly}" font-size="10" fill="#2a313c">${esc(clip(c.labels[i], 14))} (${Math.round(frac * 100)}%)</text>`;

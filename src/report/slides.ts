@@ -3,8 +3,13 @@ import { RWA_CATEGORIES } from "../types.js";
 import { selectChart } from "./charts.js";
 
 export interface DeckMeta {
-  attestationTx: string;
   cost: { estimateUsd: number; actualUsd: number; timeSavedHours: number };
+  /**
+   * On-chain anchor identifiers, known BEFORE rendering. The attestation tx is deliberately NOT
+   * embedded: the PDF's keccak256 is what gets anchored, so the bytes must be final before hashing
+   * (embedding the tx would make the published file's hash differ from the attested one).
+   */
+  anchor?: { agentId: string; registry: string; chain: string };
 }
 
 const ROMAN = ["I", "II", "III", "IV", "V", "VI", "VII"];

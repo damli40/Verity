@@ -7,6 +7,8 @@ export interface GateResult {
   stage: "deterministic" | "qualitative" | "passed";
   failures: CheckFailure[];
   judgeNotes?: string;
+  /** Tokens billed by the judge, for real cost reporting (absent if the deterministic stage short-circuits). */
+  judgeTokens?: number;
 }
 
 /**
@@ -28,7 +30,7 @@ export async function runGate(
 
   const verdict = await judgeFn(report);
   if (!verdict.passed) {
-    return { passed: false, stage: "qualitative", failures: [], judgeNotes: verdict.notes };
+    return { passed: false, stage: "qualitative", failures: [], judgeNotes: verdict.notes, judgeTokens: verdict.tokens };
   }
-  return { passed: true, stage: "passed", failures: [], judgeNotes: verdict.notes };
+  return { passed: true, stage: "passed", failures: [], judgeNotes: verdict.notes, judgeTokens: verdict.tokens };
 }

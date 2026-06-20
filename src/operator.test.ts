@@ -16,7 +16,7 @@ const report: Report = {
 const deps = {
   onchain: vi.fn(async () => dune),
   web: vi.fn(async () => [{ title: "t", url: "https://x.com/a", snippet: "s" }]),
-  synthesize: vi.fn(async () => structuredClone(report)),
+  synthesize: vi.fn(async () => ({ report: structuredClone(report), tokens: 0 })),
   judge: vi.fn(async () => ({ passed: true, notes: "ok" })),
   renderPdf: vi.fn(async () => "examples/out.pdf"),
   attest: vi.fn(async () => "0xtx"),
@@ -37,7 +37,7 @@ describe("runResearch", () => {
   });
 
   it("passes only entity-resolved allowlisted addresses to the synthesizer", async () => {
-    const spy = vi.fn(async () => structuredClone(report));
+    const spy = vi.fn(async () => ({ report: structuredClone(report), tokens: 0 }));
     const localDeps = { ...deps, synthesize: spy };
     await runResearch(
       { question: "q", entities: ["X"], queryIds: [42], allowlist, now: "2026-06-17" },
@@ -45,7 +45,7 @@ describe("runResearch", () => {
     );
     expect((spy.mock.calls[0] as any[])[3]).toEqual(["0xAbC0000000000000000000000000000000000001"]);
 
-    const spy2 = vi.fn(async () => structuredClone(report));
+    const spy2 = vi.fn(async () => ({ report: structuredClone(report), tokens: 0 }));
     await runResearch(
       { question: "q", entities: ["Unknown"], queryIds: [42], allowlist, now: "2026-06-17" },
       { ...deps, synthesize: spy2 } as any,
@@ -55,7 +55,7 @@ describe("runResearch", () => {
 
   it("does NOT render or attest when the gate fails", async () => {
     const badDeps = { ...deps, renderPdf: vi.fn(), attest: vi.fn(),
-      synthesize: vi.fn(async () => { const r = structuredClone(report); r.claims[0].metrics[0].value = 1; return r; }) };
+      synthesize: vi.fn(async () => { const r = structuredClone(report); r.claims[0].metrics[0].value = 1; return { report: r, tokens: 0 }; }) };
     const out = await runResearch(
       { question: "q", entities: ["X"], queryIds: [42], allowlist, now: "2026-06-17" },
       badDeps as any,
@@ -87,7 +87,7 @@ describe("runResearch — v2 wiring", () => {
         onchain: async () => [],
         web: async () => [],
         scrape: async () => scrapes,
-        synthesize: async () => structuredClone(scrapeReport),
+        synthesize: async () => ({ report: structuredClone(scrapeReport), tokens: 0 }),
         judge: async () => ({ passed: true, notes: "ok" }),
         renderPdf: async (r: Report) => { renderedReport = r; return "out.pdf"; },
         attest: async () => "0xtx",
@@ -106,8 +106,8 @@ describe("runResearch — v2 wiring", () => {
         onchain: async () => [],
         web: async () => [],
         discover: async () => discovered,
-        synthesize: async () => ({ question: "q", asOf: "2026-06-19",
-          claims: [{ id: "f1", text: "Ghost may grow", forwardLooking: true, metrics: [] }] }),
+        synthesize: async () => ({ report: { question: "q", asOf: "2026-06-19",
+          claims: [{ id: "f1", text: "Ghost may grow", forwardLooking: true, metrics: [] }] }, tokens: 0 }),
         judge: async () => ({ passed: true, notes: "ok" }),
         renderPdf: async () => "out.pdf",
         attest: async () => "0xtx",

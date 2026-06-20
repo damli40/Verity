@@ -76,15 +76,21 @@ export function normalizeReport(raw: unknown): Report {
   };
 }
 
+export interface SynthesisResult {
+  report: Report;
+  /** Tokens billed by the synthesis model, surfaced for real cost reporting. */
+  tokens: number;
+}
+
 /** Calls the configured synthesis model (Anthropic or OpenAI) and parses the Report JSON. */
 export async function synthesize(
   question: string,
   dune: DuneResultRef[],
   web: WebSource[],
   allowedAddresses: string[],
-): Promise<Report> {
+): Promise<SynthesisResult> {
   const model = process.env.VERITY_SYNTH_MODEL ?? "claude-opus-4-8";
-  const text = await complete({
+  const { text, tokens } = await complete({
     model,
     prompt: buildSynthesisPrompt(question, dune, web, allowedAddresses),
     // 8192 leaves room for reasoning models (o-series / gpt-5) plus the JSON report body.
@@ -95,5 +101,5 @@ export async function synthesize(
   if (start === -1 || end === -1 || end < start) {
     throw new Error("synthesizer returned no parseable JSON (model output was empty or non-JSON)");
   }
-  return normalizeReport(JSON.parse(text.slice(start, end + 1)));
+  return { report: normalizeReport(JSON.parse(text.slice(start, end + 1))), tokens };
 }

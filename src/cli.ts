@@ -43,14 +43,17 @@ async function main(): Promise<void> {
       web: async () => fx.web,
       scrape: async () => fx.scrapes ?? [],
       discover: async () => fx.discovered ?? { verified: [], quarantined: [] },
-      synthesize: liveLlm ? synthesize : async () => structuredClone(fixtureReport),
+      synthesize: liveLlm ? synthesize : async () => ({ report: structuredClone(fixtureReport), tokens: 0 }),
       judge: liveLlm ? judge : async () => ({ passed: true, notes: "fixture: qualitative review stubbed offline" }),
       renderPdf,
       attest: async (pdf) => `simulated-0x${hashFile(pdf).slice(2, 14)}`, // offline demo: no real tx
       telemetry,
     };
     const out = await runResearch(
-      { question: fx.question, entities: ["USDY", "mUSD"], queryIds: fx.queryIds, allowlist, now: fx.now, sourceAllowlist },
+      {
+        question: fx.question, entities: ["USDY", "mUSD"], queryIds: fx.queryIds, allowlist, now: fx.now, sourceAllowlist,
+        anchor: { agentId: "134", registry: "0x8004Cc8439f36fd5F9F049D9fF86523Df6dAAB58", chain: "Mantle mainnet (5000)" },
+      },
       deps,
     );
     console.log(JSON.stringify(out, null, 2));
@@ -104,7 +107,14 @@ async function main(): Promise<void> {
     telemetry,
   };
   const out = await runResearch(
-    { question, entities: ["USDY", "mUSD"], queryIds, allowlist, now: new Date().toISOString().slice(0, 10), sourceAllowlist },
+    {
+      question, entities: ["USDY", "mUSD"], queryIds, allowlist, now: new Date().toISOString().slice(0, 10), sourceAllowlist,
+      anchor: {
+        agentId: process.env.VERITY_AGENT_ID ?? "—",
+        registry: process.env.ERC8004_VALIDATION_REGISTRY ?? "—",
+        chain: "Mantle mainnet (5000)",
+      },
+    },
     deps,
   );
   console.log(JSON.stringify(out, null, 2));

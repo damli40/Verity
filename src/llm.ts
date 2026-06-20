@@ -9,6 +9,12 @@ export interface CompleteParams {
   maxTokens: number;
 }
 
+export interface CompleteResult {
+  text: string;
+  /** Total input+output tokens actually billed, for real cost transparency (0 if the API omits usage). */
+  tokens: number;
+}
+
 /**
  * Resolve the active provider from the environment. Defaults to "anthropic" so existing
  * behaviour is unchanged; set VERITY_LLM_PROVIDER=openai to test with OpenAI models.
@@ -22,7 +28,7 @@ export function selectedProvider(env: NodeJS.ProcessEnv = process.env): LlmProvi
  * Provider-agnostic single-shot text completion. The synthesizer and judge build their own
  * prompts and parse their own output; this only abstracts "send a prompt, get text back".
  */
-export async function complete({ model, prompt, maxTokens }: CompleteParams): Promise<string> {
+export async function complete({ model, prompt, maxTokens }: CompleteParams): Promise<CompleteResult> {
   if (selectedProvider() === "openai") {
     const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
     const res = await client.chat.completions.create({
@@ -30,7 +36,7 @@ export async function complete({ model, prompt, maxTokens }: CompleteParams): Pr
       max_completion_tokens: maxTokens,
       messages: [{ role: "user", content: prompt }],
     });
-    return res.choices[0]?.message?.content ?? "";
+    return { text: res.choices[0]?.message?.content ?? "", tokens: res.usage?.total_tokens ?? 0 };
   }
 
   const client = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
@@ -39,5 +45,6 @@ export async function complete({ model, prompt, maxTokens }: CompleteParams): Pr
     max_tokens: maxTokens,
     messages: [{ role: "user", content: prompt }],
   });
-  return msg.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  const text = msg.content.map((b) => (b.type === "text" ? b.text : "")).join("");
+  return { text, tokens: (msg.usage?.input_tokens ?? 0) + (msg.usage?.output_tokens ?? 0) };
 }

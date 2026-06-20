@@ -1,12 +1,20 @@
 import type { Report, DuneResultRef, AllowlistEntry, ScrapeResult, SourceAllowlistEntry } from "./types.js";
 import type { WebSource } from "./scouts/web-scout.js";
 import type { JudgeVerdict } from "./verify/llm-judge.js";
+import type { SynthesisResult } from "./synthesizer.js";
 import type { DiscoveryResult } from "./discovery/match-onchain.js";
 import { runGate } from "./verify/gate.js";
-import { scoreConfidence } from "./verify/confidence.js";
+import { scoreConfidence, deriveSignals } from "./verify/confidence.js";
 import { estimateCost, actualCost, timeSavedHours } from "./cost.js";
 import { resolveTargets } from "./scouts/onchain-finance-scout.js";
 import { deriveTier } from "./verify/tier.js";
+
+/** On-chain anchor identifiers shown in the report's verification footer (known before rendering). */
+export interface Anchor {
+  agentId: string;
+  registry: string;
+  chain: string;
+}
 
 export interface ResearchInput {
   question: string;
@@ -15,6 +23,7 @@ export interface ResearchInput {
   allowlist: AllowlistEntry[];
   now: string;
   sourceAllowlist?: SourceAllowlistEntry[];
+  anchor?: Anchor;
 }
 
 export interface ResearchDeps {
@@ -22,9 +31,9 @@ export interface ResearchDeps {
   web: (q: string) => Promise<WebSource[]>;
   scrape?: () => Promise<ScrapeResult[]>;
   discover?: () => Promise<DiscoveryResult>;
-  synthesize: (q: string, dune: DuneResultRef[], web: WebSource[], addrs: string[]) => Promise<Report>;
+  synthesize: (q: string, dune: DuneResultRef[], web: WebSource[], addrs: string[]) => Promise<SynthesisResult>;
   judge: (r: Report) => Promise<JudgeVerdict>;
-  renderPdf: (r: Report, meta: { attestationTx: string; cost: { estimateUsd: number; actualUsd: number; timeSavedHours: number } }) => Promise<string>;
+  renderPdf: (r: Report, meta: { cost: { estimateUsd: number; actualUsd: number; timeSavedHours: number }; anchor?: Anchor }) => Promise<string>;
   attest: (pdfPath: string) => Promise<string>;
   telemetry: { runCompleted: (m: any) => void; flush: () => Promise<void> | void };
 }
@@ -47,12 +56,11 @@ export async function runResearch(input: ResearchInput, deps: ResearchDeps): Pro
     deps.scrape ? deps.scrape() : Promise.resolve([] as ScrapeResult[]),
     deps.discover ? deps.discover() : Promise.resolve(undefined),
   ]);
-  const report = await deps.synthesize(input.question, dune, web, addrs);
+  const { report, tokens: synthTokens } = await deps.synthesize(input.question, dune, web, addrs);
 
-  // Attach auditable confidence to each claim before gating.
+  // Attach auditable confidence to each claim before gating — signals derived from real provenance.
   for (const c of report.claims) {
-    const onchainVerified = c.metrics.some((m) => m.provenance?.kind === "dune");
-    c.signals = { sourceQuality: 0.9, sourceAgreement: 0.85, freshness: 0.9, onchainVerified };
+    c.signals = deriveSignals(c, dune, scrapes, report.asOf);
     c.confidence = scoreConfidence(c.signals);
   }
 
@@ -66,11 +74,15 @@ export async function runResearch(input: ResearchInput, deps: ResearchDeps): Pro
   // Gate passed → every numeric metric is valid; derive each claim's trust tier for the report.
   for (const c of report.claims) c.tier = deriveTier(c);
 
-  const cost = { estimateUsd: estimateCost({ synthTokens: 10_000, judgeTokens: 2_000 }), actualUsd: actualCost({ synthTokens: 9_000, judgeTokens: 1_800 }), timeSavedHours: timeSavedHours() };
-  // Two-phase: render once with a placeholder tx to hash, attest the hash, then re-render with the real tx.
-  const draftPath = await deps.renderPdf(report, { attestationTx: "pending", cost });
-  const attestationTx = await deps.attest(draftPath);
-  const pdfPath = await deps.renderPdf(report, { attestationTx, cost });
+  const cost = {
+    estimateUsd: estimateCost({ synthTokens: 10_000, judgeTokens: 2_000 }), // upfront plan estimate
+    actualUsd: actualCost({ synthTokens, judgeTokens: gate.judgeTokens ?? 0 }), // measured from real token usage
+    timeSavedHours: timeSavedHours(),
+  };
+  // Render ONCE, then hash+attest that exact file. The attestation tx is NOT embedded in the PDF, so the
+  // published bytes are byte-identical to the attested ones — keccak256(published) == on-chain requestHash.
+  const pdfPath = await deps.renderPdf(report, { cost, anchor: input.anchor });
+  const attestationTx = await deps.attest(pdfPath);
 
   const confidenceAvg = Math.round(report.claims.reduce((s, c) => s + (c.confidence ?? 0), 0) / report.claims.length);
   deps.telemetry.runCompleted({ passed: true, gateStage: "passed", confidenceAvg, costUsd: cost.actualUsd, latencyMs: Date.now() - started });

@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { buildDeck } from "./slides.js";
 import type { Report } from "../types.js";
 
-const meta = { attestationTx: "0xtx", cost: { estimateUsd: 0.2, actualUsd: 0.18, timeSavedHours: 4 } };
+const meta = { cost: { estimateUsd: 0.2, actualUsd: 0.18, timeSavedHours: 4 } };
 const report: Report = {
   question: "Did Mantle RWA growth accelerate in Q2 2026?",
   asOf: "2026-06-17",
