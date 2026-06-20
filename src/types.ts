@@ -25,6 +25,8 @@ export interface SourceAllowlistEntry {
   roles: SourceRole[];
   /** The RWA issuer this domain officially belongs to (set on issuer-official entries). */
   issuer?: string;
+  /** Full URL of the issuer's contract-addresses page; used to confirm addresses (issuer-official entries). */
+  addressesUrl?: string;
 }
 
 /** A page captured this run; the checker string-matches scrape figures against `text`. */

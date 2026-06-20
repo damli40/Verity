@@ -64,6 +64,20 @@ async function extractRwaRows(url: string): Promise<Record<string, unknown>[]> {
   return json.data?.rwas ?? [];
 }
 
+/** Fetch a page's rendered text via Firecrawl scrape (JS-capable). Returns "" when no key is configured. */
+async function scrapeText(url: string): Promise<string> {
+  const key = process.env.FIRECRAWL_API_KEY;
+  if (!key) return "";
+  const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
+    method: "POST",
+    headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
+    body: JSON.stringify({ url, formats: ["markdown"], onlyMainContent: false, waitFor: 3500 }),
+  });
+  if (!res.ok) return "";
+  const json = (await res.json()) as { data?: { markdown?: string } };
+  return json.data?.markdown ?? "";
+}
+
 /** Confirm an address is a deployed contract on Mantle via Etherscan V2 multichain (free eth_getCode). */
 async function confirmErc20OnMantle(address: string): Promise<boolean> {
   const key = process.env.ETHERSCAN_API_KEY;
@@ -149,10 +163,7 @@ async function main(): Promise<void> {
       // Resolve each candidate via issuer-official source + on-chain (Etherscan V2, chainid 5000) confirmation.
       const lookup = makeLookup({
         list: sourceAllowlist,
-        fetchText: async (u) => {
-          const res = await fetch(u);
-          return res.ok ? res.text() : "";
-        },
+        fetchText: scrapeText,
         confirmOnchain: confirmErc20OnMantle,
       });
       return matchOnchain(candidates, allowlist, lookup);

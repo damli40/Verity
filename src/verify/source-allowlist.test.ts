@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadSourceAllowlist, hasRole, issuerOfficialDomain } from "./source-allowlist.js";
+import { loadSourceAllowlist, hasRole, issuerOfficialDomain, issuerOfficialUrl } from "./source-allowlist.js";
 import type { SourceAllowlistEntry } from "../types.js";
 
 const list: SourceAllowlistEntry[] = [
@@ -45,5 +45,21 @@ describe("issuerOfficialDomain", () => {
   });
   it("returns null when the matching domain lacks the issuer-official role", () => {
     expect(issuerOfficialDomain("rwa.xyz", l)).toBeNull();
+  });
+});
+
+describe("issuerOfficialUrl", () => {
+  const l: SourceAllowlistEntry[] = [
+    { domain: "docs.ondo.finance", roles: ["issuer-official"], issuer: "Ondo", addressesUrl: "https://docs.ondo.finance/addresses" },
+    { domain: "securitize.io", roles: ["issuer-official"], issuer: "Securitize" },
+  ];
+  it("returns the explicit addresses page when set", () => {
+    expect(issuerOfficialUrl("ondo", l)).toBe("https://docs.ondo.finance/addresses");
+  });
+  it("falls back to the bare domain when no addresses page is set", () => {
+    expect(issuerOfficialUrl("Securitize", l)).toBe("https://securitize.io");
+  });
+  it("returns null for an unknown issuer", () => {
+    expect(issuerOfficialUrl("Nobody", l)).toBeNull();
   });
 });

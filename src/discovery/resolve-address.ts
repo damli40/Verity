@@ -1,5 +1,5 @@
 import type { RwaCandidate, RwaCategory, SourceAllowlistEntry } from "../types.js";
-import { issuerOfficialDomain } from "../verify/source-allowlist.js";
+import { issuerOfficialUrl } from "../verify/source-allowlist.js";
 
 const ADDR_RE = /0x[a-fA-F0-9]{40}/g;
 
@@ -39,9 +39,8 @@ export interface LookupDeps {
  */
 export function makeLookup(deps: LookupDeps): (c: RwaCandidate) => Promise<ResolvedAddress | null> {
   return async (c) => {
-    const domain = issuerOfficialDomain(c.issuer, deps.list);
-    if (!domain) return null;
-    const url = `https://${domain}`;
+    const url = issuerOfficialUrl(c.issuer, deps.list);
+    if (!url) return null;
     const text = await deps.fetchText(url).catch(() => "");
     const address = matchIssuerAddress(c.claimedAddress, text);
     if (!address) return null;
