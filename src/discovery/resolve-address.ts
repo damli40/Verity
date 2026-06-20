@@ -1,3 +1,6 @@
+import type { RwaCandidate, RwaCategory, SourceAllowlistEntry } from "../types.js";
+import { issuerOfficialDomain } from "../verify/source-allowlist.js";
+
 const ADDR_RE = /0x[a-fA-F0-9]{40}/g;
 
 /**
@@ -14,4 +17,40 @@ export function matchIssuerAddress(claimedAddress: string | undefined, issuerPag
     return distinct.includes(claimedAddress.toLowerCase()) ? claimedAddress : null;
   }
   return distinct.length === 1 ? found[0] : null;
+}
+
+/** A candidate resolved to a trusted on-chain address (issuer-official ∩ on-chain confirmed). */
+export interface ResolvedAddress {
+  address: string;
+  category: RwaCategory;
+  provenance: string;
+}
+
+export interface LookupDeps {
+  list: SourceAllowlistEntry[];
+  fetchText: (url: string) => Promise<string>;
+  confirmOnchain: (address: string) => Promise<boolean>;
+}
+
+/**
+ * Compose issuer-official confirmation: resolve the issuer's official domain, fetch it, require the page
+ * to confirm the address (matchIssuerAddress), then require on-chain ERC-20 confirmation. Any failure ⇒
+ * null (the caller quarantines). Never trusts a bare registry claim.
+ */
+export function makeLookup(deps: LookupDeps): (c: RwaCandidate) => Promise<ResolvedAddress | null> {
+  return async (c) => {
+    const domain = issuerOfficialDomain(c.issuer, deps.list);
+    if (!domain) return null;
+    const url = `https://${domain}`;
+    const text = await deps.fetchText(url).catch(() => "");
+    const address = matchIssuerAddress(c.claimedAddress, text);
+    if (!address) return null;
+    const ok = await deps.confirmOnchain(address).catch(() => false);
+    if (!ok) return null;
+    return {
+      address,
+      category: c.category,
+      provenance: `Issuer-official source ${url} confirms ${address}; on-chain ERC-20 verified on Mantle (chainId 5000).`,
+    };
+  };
 }

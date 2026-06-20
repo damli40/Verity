@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { loadSourceAllowlist, hasRole } from "./source-allowlist.js";
+import { loadSourceAllowlist, hasRole, issuerOfficialDomain } from "./source-allowlist.js";
 import type { SourceAllowlistEntry } from "../types.js";
 
 const list: SourceAllowlistEntry[] = [
@@ -29,5 +29,21 @@ describe("loadSourceAllowlist", () => {
     const io = l.filter((e) => e.roles.includes("issuer-official"));
     expect(io.length).toBeGreaterThan(0);
     expect(io.every((e) => typeof e.issuer === "string" && e.issuer.length > 0)).toBe(true);
+  });
+});
+
+describe("issuerOfficialDomain", () => {
+  const l: SourceAllowlistEntry[] = [
+    { domain: "docs.ondo.finance", roles: ["issuer-official"], issuer: "Ondo" },
+    { domain: "app.rwa.xyz", roles: ["discovery"] },
+  ];
+  it("returns the issuer-official domain for a known issuer (case-insensitive)", () => {
+    expect(issuerOfficialDomain("ondo", l)).toBe("docs.ondo.finance");
+  });
+  it("returns null for an unknown issuer", () => {
+    expect(issuerOfficialDomain("Unknown Co", l)).toBeNull();
+  });
+  it("returns null when the matching domain lacks the issuer-official role", () => {
+    expect(issuerOfficialDomain("rwa.xyz", l)).toBeNull();
   });
 });
