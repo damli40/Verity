@@ -3,5 +3,7 @@
   { "domain": "defillama.com", "roles": ["discovery", "corroboration"] },
   { "domain": "messari.io", "roles": ["discovery", "corroboration"] },
   { "domain": "mantle.xyz", "roles": ["corroboration"] },
-  { "domain": "docs.ondo.finance", "roles": ["corroboration"] }
+  { "domain": "docs.ondo.finance", "roles": ["corroboration", "issuer-official"], "issuer": "Ondo" },
+  { "domain": "securitize.io", "roles": ["issuer-official"], "issuer": "Securitize" },
+  { "domain": "maple.finance", "roles": ["issuer-official"], "issuer": "Maple" }
 ]

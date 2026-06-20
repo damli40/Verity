@@ -24,4 +24,10 @@ describe("loadSourceAllowlist", () => {
     const l = loadSourceAllowlist("data/source-allowlist.json");
     expect(l.some((e) => e.roles.includes("corroboration"))).toBe(true);
   });
+  it("carries at least one issuer-official domain with an issuer name", () => {
+    const l = loadSourceAllowlist("data/source-allowlist.json");
+    const io = l.filter((e) => e.roles.includes("issuer-official"));
+    expect(io.length).toBeGreaterThan(0);
+    expect(io.every((e) => typeof e.issuer === "string" && e.issuer.length > 0)).toBe(true);
+  });
 });
