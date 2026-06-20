@@ -103,3 +103,29 @@ export interface CheckResult {
   passed: boolean;
   failures: CheckFailure[];
 }
+
+/** Canonical display order for RWA categories (deck sections, grouping). */
+export const RWA_CATEGORIES: RwaCategory[] = [
+  "tokenized-treasuries",
+  "tokenized-equities",
+  "index-fund",
+  "private-credit",
+  "commodities",
+  "real-estate",
+  "other",
+];
+
+/** A chart panel derived from a claim's metrics. */
+export interface ChartSpec {
+  type: "line" | "bar" | "doughnut";
+  labels: string[];
+  values: number[];
+}
+
+/** One rendered page of the report deck. */
+export type Slide =
+  | { kind: "cover"; title: string; asOf: string }
+  | { kind: "toc"; sections: { numeral: string; category: RwaCategory; pageRange: string }[] }
+  | { kind: "divider"; numeral: string; category: RwaCategory }
+  | { kind: "content"; headline: string; body: string; tier: ClaimTier; sourceCaption: string; chart?: ChartSpec; callout?: string }
+  | { kind: "appendix"; sources: { label: string; detail: string }[] };
