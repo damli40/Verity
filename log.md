@@ -3,6 +3,11 @@
 Running log of meaningful work, newest first. Detail lives in `handoff.md`; this is the at-a-glance trail.
 
 ## 2026-06-21
+- **CoinGecko folded into discovery (spec source 0).** Verified Demo key: RWA category + `platforms.mantle`
+  works; RWA∩Mantle filter returns 10 coins with clean distinct addresses (USDY + xStocks suite) — better
+  than the rwa.xyz scrape. Primary discovery candidate source; follow-up = wire a `coingeckoRwaCandidates`
+  adapter (`COINGECKO_API_KEY`) before the flagship run. Doesn't bypass issuer-official ∩ on-chain (Cardinal
+  Rule); category noise (e.g. bridged LINK) quarantines by design.
 - **Ormi 0xGraph folded into Plan 2 spec.** Verified: Ormi REST 0xAPI not on Mantle yet ("Coming soon");
   0xGraph subgraphs ARE on Mantle (`subgraph.mantle.xyz`). Plan: Ormi = preferred 2nd on-chain source
   (reproducible GraphQL, pipeline-callable), per-token no-code ERC-20 subgraph; Etherscan → last-resort

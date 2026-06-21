@@ -69,6 +69,15 @@ seam. Three stages:
 **Stage 1 — Cast a wide net (`fetchCandidates`).** Union across independent sources, deduped by resolved
 address:
 
+0. **CoinGecko Demo API (primary, structured)** — `/coins/markets?category=real-world-assets-rwa` (+ related
+   `rwa-protocol`, `real-estate`) for the RWA coin set, intersected with `/coins/list?include_platform=true`
+   (or `/coins/{id}.platforms`) filtered to a non-empty `mantle` address → `{name, id→issuer, category,
+   networks, claimedAddress=platforms.mantle, sourceUrl}`. **Verified 2026-06-21** (Demo key): returns
+   canonical, **distinct per-token** Mantle addresses (USDY + the full xStocks suite with *correct* separate
+   addresses — far cleaner than the rwa.xyz Firecrawl scrape, which collapsed xStocks onto one address).
+   Free Demo tier, REST + `x-cg-demo-api-key`, so pipeline-callable. Caveat: CoinGecko's RWA tagging carries
+   noise (e.g. bridged LINK tagged RWA) and is mcap-ranked/non-exhaustive (mUSD/MI4 absent from page 1) — the
+   Cardinal Rule absorbs the noise (no issuer-official entry ⇒ quarantine), and the other sources fill gaps.
 1. **Firecrawl `extract`** over RWA registries — DefiLlama (RWA category filtered to Mantle), rwa.xyz,
    `app.mantle.xyz` ecosystem, Messari — into `{name, issuer, category, networks, claimedAddress, sourceUrl}`.
 2. **Dune MCP `searchDuneDashboards` / `searchTables`** — harvest tokens already tracked by community
@@ -196,7 +205,10 @@ question
 
 - **Plan 1 — Discovery funnel.** Types delta; `issuer-official` role; real `fetchCandidates` (Firecrawl +
   Dune harvest + deployer enumeration + Nansen screener + Exa) and `lookup` resolver; `matchOnchain`
-  auto-promote on issuer-source agreement; CLI wiring; tests.
+  auto-promote on issuer-source agreement; CLI wiring; tests. **DONE + merged + live-verified.**
+  Follow-up (quick win, before the flagship run): add a **CoinGecko `fetchCandidates` adapter** (source 0
+  above) — pure `coingeckoRwaCandidates(json)` mapper + CLI wiring with `COINGECKO_API_KEY`; preferred
+  candidate source for clean per-token Mantle addresses.
 - **Plan 2 — Multi-provider verification + cross-check.** `ProvenanceRef` union (dune|subgraph|nansen|etherscan);
   `ormi-scout` (Ormi 0xGraph, Mantle `subgraph.mantle.xyz`, per-token no-code ERC-20 subgraph — preferred
   second source) + `nansen-scout` + `etherscan-scout` (last-resort confirm); `onchain-checker`; `cross-check`
