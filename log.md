@@ -3,6 +3,11 @@
 Running log of meaningful work, newest first. Detail lives in `handoff.md`; this is the at-a-glance trail.
 
 ## 2026-06-21
+- **Ormi 0xGraph folded into Plan 2 spec.** Verified: Ormi REST 0xAPI not on Mantle yet ("Coming soon");
+  0xGraph subgraphs ARE on Mantle (`subgraph.mantle.xyz`). Plan: Ormi = preferred 2nd on-chain source
+  (reproducible GraphQL, pipeline-callable), per-token no-code ERC-20 subgraph; Etherscan → last-resort
+  confirm. Spec rows + ProvenanceRef + scouts/checker/cross-check/decomposition updated. **Next session:
+  write + execute Plan 2.**
 - **v3 Plan 1 (Discovery Funnel) built, reviewed, and LIVE-VERIFIED** on branch `verity-v3-plan1-discovery`
   (subagent-driven, 7 TDD tasks, 106/106 tests, tsc clean, `--fixture` green). Replaces the stubbed
   discovery with: candidate metadata (`claimedAddress`/`sourceUrl`) + `issuer-official` source role →

@@ -56,7 +56,8 @@ does from what the autonomous pipeline reproduces via REST clients.
 | 3 | Dune-native charts in the report | **Bake static image bytes.** Dune MCP authors the visualization → render to static PNG/SVG → embed inline. Self-contained, offline, hash-stable. Appendix links the live Dune query for re-running. |
 | 4 | Report subject | The Mantle RWA-growth question, **broadened to the full auto-verified discovered RWA set** (not just USDY/mUSD). USDY/mUSD remain the deepest-data anchor cases; quarantined assets are named but never numerically cited. |
 | 5 | Discovery promotion trust posture | **Auto-verify on issuer-source ∩ on-chain agreement.** A discovered asset auto-promotes to verified when its address is confirmed by the issuer's own official source (allowlisted domain) AND matches a real on-chain ERC-20. Unknown issuers with no official-source confirmation stay quarantined for human review. |
-| 6 | On-chain provider fallback | **Etherscan/Mantlescan as the fallback when Nansen lacks coverage.** Etherscan-family API for Mantle (Mantlescan, or Etherscan V2 multichain with `chainid=5000`) supplies token supply + contract confirmation for free, keeping cross-verification two-sourced (Dune + Etherscan) when Nansen does not index a token. Holder count/list is an Etherscan Pro (paid) endpoint, so Etherscan backstops supply + confirmation but does not replace Nansen's holder-concentration / smart-money dimensions. |
+| 6 | On-chain provider fallback | **Etherscan/Mantlescan as a last-resort confirm.** Etherscan V2 multichain (`chainid=5000`) supplies contract confirmation (`eth_getCode`) + token supply for free. Holder count/list is an Etherscan Pro (paid) endpoint, so Etherscan only backstops supply + contract-existence — it does not replace richer holder/flow data. Used only when no better on-chain source covers a token. |
+| 7 | Subgraph provider (Ormi 0xGraph) | **Ormi 0xGraph is the preferred second on-chain source on Mantle.** Verified 2026-06-21: Ormi's REST **0xAPI is NOT on Mantle yet** ("Coming soon"), but **0xGraph subgraphs ARE** — Mantle mainnet is a Dedicated (Public) environment at `https://subgraph.mantle.xyz/`. Approach: deploy a no-code ERC-20 subgraph per verified RWA (keyed by the address discovery produces) → a **reproducible GraphQL query** (same recomputable-trust property as a Dune query ID) for supply/transfers/holders. Plain GraphQL over HTTP, so the autonomous pipeline can call it directly (unlike the Dune/Nansen MCPs). Revisit the 0xAPI when it ships on Mantle (would remove the per-token subgraph-deploy step). |
 
 ## Architecture
 
@@ -103,20 +104,25 @@ gated on issuer-source agreement, not a bare registry claim.
 - **`ProvenanceRef`** generalizes from Dune-only to a discriminated union:
   - `{ kind: "dune", queryId, column, row }` (existing)
   - `{ kind: "nansen", endpoint, field, address, chain }` (new)
-  - `{ kind: "etherscan", endpoint, field, address, chain }` (new — fallback on-chain provider)
+  - `{ kind: "subgraph", endpoint, query, field, address, chain }` (new — Ormi 0xGraph; reproducible GraphQL)
+  - `{ kind: "etherscan", endpoint, field, address, chain }` (new — last-resort confirm)
 - **`src/scouts/nansen-scout.ts`** — injected REST client returning a structured `NansenResultRef[]`
   (holders, concentration, segment flows, token info), analogous to the Dune scout. External I/O injected
   for unit-testability per §6.
-- **`src/scouts/etherscan-scout.ts`** — injected Etherscan/Mantlescan REST client (Etherscan V2,
-  `chainid=5000`) returning token supply + contract-confirmation fields. Used as the second on-chain source
-  for cross-verification **when Nansen does not index a token**; supply + confirmation are free-tier,
-  holder count is best-effort (Pro endpoint).
-- **`src/verify/onchain-checker.ts`** — re-validates a `kind:"nansen"` or `kind:"etherscan"` metric against
-  the live provider response, mirroring `provenance-checker.ts`. Fails closed on a missing/mismatched field.
+- **`src/scouts/ormi-scout.ts`** — injected Ormi 0xGraph client: a reproducible GraphQL query against the
+  Mantle subgraph endpoint (`https://subgraph.mantle.xyz/`, per-token no-code ERC-20 subgraph) returning
+  supply/transfers/holders. The query string + field path are stored in the metric's `subgraph` provenance
+  so the figure is re-runnable. Plain HTTP/GraphQL — callable from the autonomous pipeline.
+- **`src/scouts/etherscan-scout.ts`** — injected Etherscan V2 (`chainid=5000`) REST client returning token
+  supply + contract confirmation. **Last-resort** second source only when neither Nansen nor an Ormi
+  subgraph covers a token; holder count is best-effort (Pro endpoint).
+- **`src/verify/onchain-checker.ts`** — re-validates a `kind:"nansen" | "subgraph" | "etherscan"` metric
+  against the live provider response, mirroring `provenance-checker.ts`. Fails closed on a missing/mismatched field.
 - **`src/verify/cross-check.ts`** — pairs metrics asserting the same quantity across providers; stamps the
-  top **Cross-verified** tier only when two independent on-chain sources (Dune + Nansen, or Dune + Etherscan
-  when Nansen is absent) agree within a declared tolerance (e.g. ±1%, stated in the report); emits an
-  explicit `disagreement` flag otherwise. Never averages.
+  top **Cross-verified** tier only when two independent on-chain sources agree within a declared tolerance
+  (e.g. ±1%, stated in the report). Second-source preference: **Dune + Ormi subgraph** (richest, reproducible)
+  ▸ Dune + Nansen ▸ Dune + Etherscan (confirm-only). Disagreement emits an explicit `disagreement` flag;
+  never averages.
 - **Tier order becomes:** Cross-verified ▸ Verified ▸ Corroborated ▸ Forward-looking. `deriveTier` and the
   tier badges/theme extend to the new top tier.
 - **`runGate`** threads the Nansen scout result + cross-check alongside the existing Dune checker. A
@@ -149,10 +155,10 @@ gated on issuer-source agreement, not a bare registry claim.
 question
   ├─ discovery: fetchCandidates (Firecrawl + Dune MCP + Dune deployer query + Nansen screener + Exa)
   │     → lookup (issuer-official source ∩ on-chain confirm) → matchOnchain → {verified[], quarantined[]}
-  ├─ scouts: Dune (supply/volume) ‖ Nansen (holders/concentration/flows) [‖ Etherscan supply when Nansen absent] ‖ web (Exa) ‖ scrape (corroboration)
-  ├─ synthesize: provenance-tagged claims (dune|nansen|etherscan), categories, prose layer  → SynthesisResult
+  ├─ scouts: Dune (supply/volume) ‖ Ormi 0xGraph subgraph (supply/transfers/holders) ‖ Nansen (concentration/smart-money flows) [‖ Etherscan confirm last-resort] ‖ web (Exa) ‖ scrape (corroboration)
+  ├─ synthesize: provenance-tagged claims (dune|subgraph|nansen|etherscan), categories, prose layer  → SynthesisResult
   ├─ verify gate:
-  │     provenance-checker (dune cells)  ‖  onchain-checker (nansen|etherscan fields)  → cross-check (agreement → tier/flag)
+  │     provenance-checker (dune cells)  ‖  onchain-checker (subgraph|nansen|etherscan fields)  → cross-check (agreement → tier/flag)
   │     → LLM judge (qualitative only)
   ├─ confidence: deriveSignals (multi-provider quality/agreement/freshness) → score
   ├─ render ONCE: landscape deck (sections by category, tier badges incl. Cross-verified, baked charts,
@@ -178,10 +184,11 @@ question
 - TDD per §6: failing test → fail → minimal impl → pass → commit. External I/O injected.
 - New unit tests: `parseCandidates` with `claimedAddress`/`sourceUrl`; `lookup` resolution (issuer match,
   registry-claim-vs-official mismatch rejected, unknown issuer → null); `matchOnchain` auto-promote only on
-  issuer-source agreement; `nansen-scout` + `etherscan-scout` shapers; `onchain-checker` (pass, fail on
-  mismatch, fail-closed on missing field, for both nansen + etherscan kinds); `cross-check` (Dune+Nansen
-  agreement → Cross-verified, Dune+Etherscan fallback → Cross-verified, disagreement → flag, single-source
-  → Verified); `deriveTier`/theme for the new tier; synthesizer category emission.
+  issuer-source agreement; `ormi-scout` + `nansen-scout` + `etherscan-scout` shapers; `onchain-checker`
+  (pass, fail on mismatch, fail-closed on missing field, for subgraph + nansen + etherscan kinds);
+  `cross-check` (Dune+Ormi agreement → Cross-verified, Dune+Nansen → Cross-verified, Dune+Etherscan confirm
+  → Cross-verified, disagreement → flag, single-source → Verified); `deriveTier`/theme for the new tier;
+  synthesizer category emission.
 - Backward compatibility: the offline `--fixture` path must stay green and continue to render an attested
   deck with zero API keys. Fixtures extended with Nansen cells + a discovered/quarantined example.
 
@@ -190,10 +197,12 @@ question
 - **Plan 1 — Discovery funnel.** Types delta; `issuer-official` role; real `fetchCandidates` (Firecrawl +
   Dune harvest + deployer enumeration + Nansen screener + Exa) and `lookup` resolver; `matchOnchain`
   auto-promote on issuer-source agreement; CLI wiring; tests.
-- **Plan 2 — Multi-provider verification + cross-check.** `ProvenanceRef` union (dune|nansen|etherscan);
-  `nansen-scout` + `etherscan-scout` (fallback); `onchain-checker`; `cross-check` with Etherscan fallback
-  when Nansen is absent; Cross-verified tier through `deriveTier`/theme/gate; confidence signals across
-  providers; tests.
+- **Plan 2 — Multi-provider verification + cross-check.** `ProvenanceRef` union (dune|subgraph|nansen|etherscan);
+  `ormi-scout` (Ormi 0xGraph, Mantle `subgraph.mantle.xyz`, per-token no-code ERC-20 subgraph — preferred
+  second source) + `nansen-scout` + `etherscan-scout` (last-resort confirm); `onchain-checker`; `cross-check`
+  (second-source preference Dune+Ormi ▸ Dune+Nansen ▸ Dune+Etherscan); Cross-verified tier through
+  `deriveTier`/theme/gate; confidence signals across providers; tests. Pre-req: deploy ERC-20 subgraphs on
+  Ormi for the verified RWA set (USDY/mUSD/MI4…). Revisit Ormi 0xAPI REST if/when it ships on Mantle.
 - **Plan 3 — Narrative + Dune charts + flagship run.** Synthesizer multi-source prompt + categories +
   prose layer; judge qualitative scoring of prose; baked Dune-native charts (flagship) + pipeline SVG hook;
   full flagship live run over the discovered Mantle RWA set + re-attestation.
